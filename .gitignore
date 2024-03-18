@@ -1,0 +1,9 @@
+*.csv
+*.bin
+
+# C output objects
+*.o
+planificador
+
+# Compilation database
+compile_commands.json
