@@ -4,8 +4,8 @@
 
 // Función de comparación para ordenar procesos por tiempo de llegada
 int compararPorTiempoLlegada(const void* a, const void* b) {
-    Proceso* proc_a = (Proceso*)a;
-    Proceso* proc_b = (Proceso*)b;
+    const Proceso* proc_a = (const Proceso*)a;
+    const Proceso* proc_b = (const Proceso*)b;
 
     return proc_a->tiempoLlegada - proc_b->tiempoLlegada;
 }

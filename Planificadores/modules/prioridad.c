@@ -4,7 +4,16 @@
 
 // Función de comparación inicial por prioridad y tiempo de llegada
 int compararPorPrioridad(const void *a, const void *b) {
-    
+    const Proceso* proc_a = (const Proceso*)a;
+    const Proceso* proc_b = (const Proceso*)b;
+
+    unsigned int prioridad = proc_a->prioridad - proc_b->prioridad;
+
+    if (prioridad == 0) {
+        return proc_a->tiempoLlegada - proc_b->tiempoLlegada;
+    }
+
+    return prioridad;
 }
 
 // Ajusta las prioridades de los procesos basándose en el envejecimiento

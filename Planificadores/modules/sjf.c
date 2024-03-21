@@ -3,7 +3,10 @@
 #include <stdio.h> // Para fprintf
 
 int compararPorDuracionRafaga(const void *a, const void *b) {
-    // Implemetar la lógica de la función
+    const Proceso* proc_a = (const Proceso*)a;
+    const Proceso* proc_b = (const Proceso*)b;
+
+    return proc_a->duracionRafaga - proc_b->duracionRafaga;
 }
 
 void planificarSJF(Proceso* procesos, int numProcesos) {

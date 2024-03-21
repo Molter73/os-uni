@@ -12,10 +12,10 @@ DEPS = $(wildcard $(MODULES_DIR)/*.h)
 
 # Reglas
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -g -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -g -o $@ $^ $(CFLAGS)
 
 clean:
 	rm -f $(SRC_DIR)/*.o $(MODULES_DIR)/*.o $(TARGET)
