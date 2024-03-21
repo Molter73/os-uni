@@ -3,6 +3,6 @@
 
 #include "proceso.h"
 
-void planificarFCFS(Proceso* procesos, int numProcesos);
+void planificarFCFS(procesos_t* procesos);
 
 #endif

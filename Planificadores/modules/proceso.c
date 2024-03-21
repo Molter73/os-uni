@@ -1,12 +1,51 @@
-#include <stdio.h>
-#include <stdlib.h> // Para malloc, free y funciones relacionadas con archivos
 #include "proceso.h"
 
-int leerProcesosDesdeArchivoBinario(const char* nombreArchivo, Proceso** procesos) {
-    FILE *archivo = fopen(nombreArchivo, "rb");
+#include <assert.h>
+#include <stdio.h>
+
+procesos_t* procesos_new(size_t numProcesos) {
+    procesos_t* procesos = (procesos_t*)malloc(sizeof(procesos_t));
+    if (procesos == NULL) {
+        return NULL;
+    }
+
+    procesos->ptr = calloc(numProcesos, sizeof(Proceso));
+    if (procesos->ptr == NULL) {
+        free(procesos);
+        return NULL;
+    }
+
+    procesos->size = numProcesos;
+    return procesos;
+}
+
+void procesos_free(procesos_t* p) {
+    if (p != NULL) {
+        free(p->ptr);
+        free(p);
+    }
+}
+
+bool procesos_is_valid(const procesos_t* p) {
+    return p != NULL && p->ptr != NULL && p->size > 0;
+}
+
+Proceso* procesos_get(const procesos_t* p, size_t i) {
+    assert(procesos_is_valid(p));
+
+    if (i < p->size) {
+        return &p->ptr[i];
+    }
+    return NULL;
+}
+
+procesos_t* leerProcesosDesdeArchivoBinario(const char* nombreArchivo) {
+    procesos_t* procesos = NULL;
+    FILE* archivo        = fopen(nombreArchivo, "rb");
+
     if (!archivo) {
         perror("Error al abrir el archivo binario");
-        return -1; // Cambiado de 0 a -1 para indicar error
+        return NULL;
     }
 
     fseek(archivo, 0, SEEK_END);
@@ -15,32 +54,33 @@ int leerProcesosDesdeArchivoBinario(const char* nombreArchivo, Proceso** proceso
 
     int numProcesos = fileSize / sizeof(Proceso);
     if (numProcesos <= 0) { // Verificación adicional para el tamaño del archivo
-        printf("El archivo está vacío o tiene un formato incorrecto.\n");
-        fclose(archivo);
-        return -2; // Nuevo código de error para archivo vacío o formato incorrecto
+        fprintf(stderr, "El archivo está vacío o tiene un formato incorrecto.\n");
+        goto error;
     }
 
-    *procesos = (Proceso*)malloc(numProcesos * sizeof(Proceso));
-    if (*procesos == NULL) {
-        printf("No se pudo asignar memoria para los procesos.\n");
-        fclose(archivo);
-        return -3; // Nuevo código de error para falla en asignación de memoria
+    procesos = procesos_new(numProcesos);
+    if (procesos == NULL) {
+        fprintf(stderr, "No se pudo asignar memoria para los procesos.\n");
+        goto error;
     }
 
-    size_t leidos = fread(*procesos, sizeof(Proceso), numProcesos, archivo);
+    size_t leidos = fread(procesos->ptr, sizeof(Proceso), numProcesos, archivo);
     if (leidos != numProcesos) {
-        printf("Error al leer los datos del archivo.\n");
-        free(*procesos);
-        fclose(archivo);
-        return -4; // Nuevo código de error para lectura incompleta
+        fprintf(stderr, "Error al leer los datos del archivo.\n");
+        goto error;
     }
 
     fclose(archivo);
-    return numProcesos;
+    return procesos;
+
+error:
+    procesos_free(procesos);
+    fclose(archivo);
+    return NULL;
 }
 
-void guardarProcesosEnCSV(const char* nombreArchivo, Proceso* procesos, int numProcesos) {
-    FILE *archivo = fopen(nombreArchivo, "w");
+void guardarProcesosEnCSV(const char* nombreArchivo, procesos_t* procesos) {
+    FILE* archivo = fopen(nombreArchivo, "w");
     if (!archivo) {
         perror("Error al abrir el archivo CSV");
         return;
@@ -49,17 +89,18 @@ void guardarProcesosEnCSV(const char* nombreArchivo, Proceso* procesos, int numP
     fprintf(archivo, "ID Proceso,Tiempo de Llegada,Duración de la Ráfaga,Inicio de Ejecución,Fin de Ejecución\n");
 
     int tiempoActual = 0;
-    for (int i = 0; i < numProcesos; i++) {
-        if (tiempoActual < procesos[i].tiempoLlegada) {
-            tiempoActual = procesos[i].tiempoLlegada;
+    size_t i         = 0;
+    Proceso* p       = procesos_get(procesos, i);
+    for (; p != NULL; p = procesos_get(procesos, ++i)) {
+        if (tiempoActual < p->tiempoLlegada) {
+            tiempoActual = p->tiempoLlegada;
         }
         int inicioEjecucion = tiempoActual;
-        int finEjecucion = tiempoActual + procesos[i].duracionRafaga;
-        tiempoActual = finEjecucion;
+        int finEjecucion    = tiempoActual + p->duracionRafaga;
+        tiempoActual        = finEjecucion;
 
-        fprintf(archivo, "%d,%d,%d,%d,%d\n", procesos[i].id, procesos[i].tiempoLlegada, procesos[i].duracionRafaga, inicioEjecucion, finEjecucion);
+        fprintf(archivo, "%d,%d,%d,%d,%d\n", p->id, p->tiempoLlegada, p->duracionRafaga, inicioEjecucion, finEjecucion);
     }
 
     fclose(archivo);
 }
-

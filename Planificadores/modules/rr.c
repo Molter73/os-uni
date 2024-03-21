@@ -35,19 +35,21 @@ bool isReady(const Proceso* p, unsigned int currentTime) {
     return p->tiempoLlegada <= currentTime && p->duracionRafaga != 0;
 }
 
-int nextProcess(const Proceso* procesos, int numProcesos, const context_t* context) {
-    assert(procesos != NULL);
+int nextProcess(const procesos_t* procesos, const context_t* context) {
+    assert(procesos_is_valid(procesos));
     assert(context != NULL);
 
     bool processPending = false;
 
     // Iteramos todos los procesos para encontrar cuál se debe ejecutar.
-    for (int next = context->process + 1; next != context->process; next++) {
-        if (next == numProcesos) {
+    size_t next = context->process + 1;
+    const Proceso* p = procesos_get(procesos, next);
+    for (; next != context->process; p = procesos_get(procesos, ++next)) {
+        if (p == NULL) {
             next = 0;
+            p    = procesos_get(procesos, next);
         }
 
-        const Proceso* p = &procesos[next];
         if (isReady(p, context->time)) {
             return next;
         }
@@ -59,7 +61,7 @@ int nextProcess(const Proceso* procesos, int numProcesos, const context_t* conte
 
     // Llegado este punto estamos en el mismo proceso inicial,
     // si está listo para ejecutar, lo ejecutamos.
-    if (isReady(&procesos[context->process], context->time)) {
+    if (isReady(procesos_get(procesos, next), context->time)) {
         return context->process;
     }
 
@@ -71,7 +73,7 @@ int nextProcess(const Proceso* procesos, int numProcesos, const context_t* conte
     return DONE_PROCESSING;
 }
 
-void planificarRR(Proceso* procesos, int numProcesos, int quantum) {
+void planificarRR(procesos_t* procesos, int quantum) {
     context_t context = {.process = NO_PROCESS_READY, .time = 0};
     FILE* output      = prepararFicheroSalida();
 
@@ -80,18 +82,18 @@ void planificarRR(Proceso* procesos, int numProcesos, int quantum) {
     }
 
     while (true) {
-        context.process = nextProcess(procesos, numProcesos, &context);
+        context.process = nextProcess(procesos, &context);
         while (context.process == NO_PROCESS_READY) {
             // Si no tenemos procesos listos para ejecutar, dejamos pasar un tick.
             context.time++;
-            context.process = nextProcess(procesos, numProcesos, &context);
+            context.process = nextProcess(procesos, &context);
         }
 
         if (context.process == DONE_PROCESSING) {
             break;
         }
 
-        Proceso* p             = &procesos[context.process];
+        Proceso* p             = procesos_get(procesos, context.process);
         unsigned int startTime = context.time;
 
         if (p->duracionRafaga < quantum) {

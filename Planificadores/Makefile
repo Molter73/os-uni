@@ -11,11 +11,16 @@ OBJS = $(SRCS:.c=.o)
 DEPS = $(wildcard $(MODULES_DIR)/*.h)
 
 # Reglas
+all: $(TARGET)
+
+debug: CFLAGS += -g
+debug: $(TARGET)
+
 %.o: %.c $(DEPS)
-	$(CC) -c -g -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(TARGET): $(OBJS)
-	$(CC) -g -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
 	rm -f $(SRC_DIR)/*.o $(MODULES_DIR)/*.o $(TARGET)

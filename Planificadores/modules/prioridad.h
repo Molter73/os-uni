@@ -3,6 +3,6 @@
 
 #include "proceso.h"
 
-void planificarPrioridades(Proceso* procesos, int numProcesos);
+void planificarPrioridades(procesos_t* procesos);
 
 #endif

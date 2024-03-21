@@ -11,13 +11,13 @@ int compararPorTiempoLlegada(const void* a, const void* b) {
 }
 
 // Función para planificar procesos usando el algoritmo First-Come, First-Served (FCFS)
-void planificarFCFS(Proceso* procesos, int numProcesos) {
+void planificarFCFS(procesos_t* procesos) {
     // Validación de los argumentos y ordenar después por su tiempo de llegada (se puede utilizar qsort)
-    if (procesos == NULL || numProcesos <= 0) {
+    if (!procesos_is_valid(procesos)) {
         fprintf(stderr, "Error: Argumentos no válidos para planificarSJF.\n");
         return;
     }
-    qsort(procesos, numProcesos, sizeof(Proceso), compararPorTiempoLlegada);
+    qsort(procesos->ptr, procesos->size, sizeof(Proceso), compararPorTiempoLlegada);
     /*
     Después de esta llamada a qsort, los procesos están ordenados según el algoritmo FCFS, listos para ser procesados en
     este orden.

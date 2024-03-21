@@ -3,6 +3,6 @@
 
 #include "proceso.h"
 
-void planificarSJF(Proceso* procesos, int numProcesos);
+void planificarSJF(procesos_t* procesos);
 
 #endif
