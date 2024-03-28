@@ -52,3 +52,12 @@ jobs:
         name: planificadores
         path: Planificadores/outputs/
         retention-days: 7
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Formatting check
+        run: |
+          find Planificadores/ -type f -name '*.c' -print0 -o -name '*.h' -print0 |
+            xargs -0 clang-format -Werror --style=file -n
