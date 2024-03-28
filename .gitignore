@@ -1,5 +1,5 @@
-*.csv
-*.bin
+data/
+outputs/
 
 # C output objects
 *.o

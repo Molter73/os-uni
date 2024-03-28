@@ -25,4 +25,4 @@ $(TARGET): $(OBJS)
 .PHONY: clean
 clean:
 	rm -f $(SRC_DIR)/*.o $(MODULES_DIR)/*.o $(TARGET)
-	rm -rf **/*.csv
+	rm -rf $(SRC_DIR)/outputs/
