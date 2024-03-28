@@ -45,3 +45,10 @@ jobs:
         cd Planificadores
         pip install -r scripts/requirements.txt
         ./scripts/run-all.sh ./planificador ./data ./outputs
+
+    - name: Save artifacts
+      uses: actions/store-artifacts@v4
+      with:
+        name: planificadores
+        path: Planificadores/outputs/
+        retention-days: 7
