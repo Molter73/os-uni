@@ -64,8 +64,8 @@ jobs:
 
       - name: Run clang-tidy
         run: |
-          apt-get update
-          apt-get install -y bear
+          sudo apt-get update
+          sudo apt-get install -y bear
 
           bear -- make -C Planificadores
 
