@@ -61,3 +61,13 @@ jobs:
         run: |
           find Planificadores/ -type f -name '*.c' -print0 -o -name '*.h' -print0 |
             xargs -0 clang-format -Werror --style=file -n
+
+      - name: Run clang-tidy
+        run: |
+          apt-get update
+          apt-get install -y bear
+
+          bear -- make -C Planificadores
+
+          find Planificadores/ -type f -name '*.c' -print0 -o -name '*.h' -print0 |
+            xargs -0 clang-tidy -p compile_commands.json --config-file=.clang-tidy
