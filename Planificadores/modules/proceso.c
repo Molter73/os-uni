@@ -1,7 +1,10 @@
 #include "proceso.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 procesos_t* procesos_new(size_t numProcesos) {
     procesos_t* procesos = (procesos_t*)malloc(sizeof(procesos_t));
@@ -37,6 +40,12 @@ Proceso* procesos_get(const procesos_t* p, size_t i) {
         return &p->ptr[i];
     }
     return NULL;
+}
+
+bool procesos_is_ready(const Proceso* p, unsigned int currentTime) {
+    assert(p != NULL);
+
+    return p->tiempoLlegada <= currentTime && p->duracionRafaga != 0;
 }
 
 procesos_t* leerProcesosDesdeArchivoBinario(const char* nombreArchivo) {
@@ -80,13 +89,7 @@ error:
 }
 
 void guardarProcesosEnCSV(const char* nombreArchivo, procesos_t* procesos) {
-    FILE* archivo = fopen(nombreArchivo, "w");
-    if (!archivo) {
-        perror("Error al abrir el archivo CSV");
-        return;
-    }
-
-    fprintf(archivo, "ID Proceso,Tiempo de Llegada,Duración de la Ráfaga,Inicio de Ejecución,Fin de Ejecución\n");
+    FILE* archivo = prepararFicheroSalida(nombreArchivo);
 
     int tiempoActual = 0;
     size_t i         = 0;
@@ -95,12 +98,37 @@ void guardarProcesosEnCSV(const char* nombreArchivo, procesos_t* procesos) {
         if (tiempoActual < p->tiempoLlegada) {
             tiempoActual = p->tiempoLlegada;
         }
-        int inicioEjecucion = tiempoActual;
-        int finEjecucion    = tiempoActual + p->duracionRafaga;
-        tiempoActual        = finEjecucion;
 
-        fprintf(archivo, "%d,%d,%d,%d,%d\n", p->id, p->tiempoLlegada, p->duracionRafaga, inicioEjecucion, finEjecucion);
+        RunFrame rf = {
+            .id = p->id,
+            .tiempoLlegada = p->tiempoLlegada,
+            .duracion = p->duracionRafaga,
+            .inicio = tiempoActual,
+            .fin = tiempoActual + p->duracionRafaga,
+        };
+        tiempoActual        = rf.fin;
+
+        guardarFrame(archivo, &rf);
     }
 
     fclose(archivo);
+}
+
+FILE* prepararFicheroSalida(const char* outputPath) {
+    FILE* output = fopen(outputPath, "w");
+    if (output == NULL) {
+        fprintf(stderr, "Error al abrir archivo '%s': %s\n", outputPath, strerror(errno));
+        return NULL;
+    }
+
+    fprintf(output, "ID Proceso,Tiempo de Llegada,Duración de la Ráfaga,Inicio de Ejecución,Fin de Ejecución\n");
+
+    return output;
+}
+
+void guardarFrame(FILE* f, RunFrame* rf) {
+    assert(f != NULL);
+    assert(rf != NULL);
+
+    fprintf(f, "%d,%d,%d,%d,%d\n", rf->id, rf->tiempoLlegada, rf->duracion, rf->inicio, rf->fin);
 }

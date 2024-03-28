@@ -4,11 +4,19 @@
 #include "modules/rr.h"
 #include "modules/sjf.h"
 
+#include <assert.h>
 #include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+typedef struct options_s {
+    const char* algorithm;
+    const char* input;
+    const char* output;
+    bool preemptive;
+} options_t;
 
 void usage(char* prog) {
     printf("Uso: %s [FLAGS] <algoritmo> <archivo>\n\n", prog);
@@ -17,11 +25,14 @@ void usage(char* prog) {
     printf("FLAGS:\n");
     printf("-h\tImprime este texto de ayuda\n");
     printf("-o\tDirectorio de salida para los archivos CSV generados. Default: './data'\n");
+    printf("-p\tCuando se usa el algoritmo por prioridades, realiza ajuste por envejecimiento\n");
 }
 
-int run(const char* algorithm, const char* input, const char* outputDirectory) {
+int run(const options_t* opts) {
+    assert(opts != NULL);
+
     char output[PATH_MAX];
-    procesos_t* procesos = leerProcesosDesdeArchivoBinario(input);
+    procesos_t* procesos = leerProcesosDesdeArchivoBinario(opts->input);
     if (procesos == NULL) {
         fprintf(stderr, "Fallo al leer el archivo de entrada");
         return 1;
@@ -32,28 +43,37 @@ int run(const char* algorithm, const char* input, const char* outputDirectory) {
         return 1;
     }
 
-    snprintf(output, PATH_MAX, "%s/%s_procesos.csv", outputDirectory, algorithm);
+    if (opts->preemptive) {
+        snprintf(output, PATH_MAX, "%s/%s_preemptive_procesos.csv", opts->output, opts->algorithm);
+    } else {
+        snprintf(output, PATH_MAX, "%s/%s_procesos.csv", opts->output, opts->algorithm);
+    }
 
     // Selecciona el algoritmo de planificación basado en el argumento de la línea de comandos
-    if (strcmp(algorithm, "fcfs") == 0) {
+    if (strcmp(opts->algorithm, "fcfs") == 0) {
         printf("Planificando usando First-Come, First-Served (FCFS)...\n");
         planificarFCFS(procesos);
         guardarProcesosEnCSV(output, procesos);
-    } else if (strcmp(algorithm, "sjf") == 0) {
+    } else if (strcmp(opts->algorithm, "sjf") == 0) {
         printf("Planificando usando Shortest Job First (SJF)...\n");
         planificarSJF(procesos);
         guardarProcesosEnCSV(output, procesos);
-    } else if (strcmp(algorithm, "prioridad") == 0) {
-        printf("Planificando usando Prioridades...\n");
-        planificarPrioridades(procesos);
-        guardarProcesosEnCSV(output, procesos);
-    } else if (strcmp(algorithm, "rr") == 0) {
+    } else if (strcmp(opts->algorithm, "prioridad") == 0) {
+        if (opts->preemptive) {
+            printf("Planificando usando Prioridades con prevaciado...\n");
+            planificarPrioridadesPreemptive(procesos, output);
+        } else {
+            printf("Planificando usando Prioridades...\n");
+            planificarPrioridades(procesos);
+            guardarProcesosEnCSV(output, procesos);
+        }
+    } else if (strcmp(opts->algorithm, "rr") == 0) {
         int quantum = 4;
         printf("Planificando usando Round Robin (RR)...\n");
         planificarPrioridades(procesos);
         planificarRR(procesos, quantum, output);
     } else {
-        fprintf(stderr, "Algoritmo no reconocido.\n\n");
+        fprintf(stderr, "opts->Algoritmo no reconocido.\n\n");
         procesos_free(procesos);
         return 1;
     }
@@ -63,18 +83,24 @@ int run(const char* algorithm, const char* input, const char* outputDirectory) {
 }
 
 int main(int argc, char* argv[]) {
-    char* output    = "./data";
-    char* input     = NULL;
-    char* algorithm = NULL;
-    int opt         = -1;
+    options_t opts = {
+        .algorithm  = NULL,
+        .output     = "./data",
+        .input      = NULL,
+        .preemptive = false,
+    };
+    int opt = -1;
 
-    while ((opt = getopt(argc, argv, "ho:")) != -1) {
+    while ((opt = getopt(argc, argv, "ho:p")) != -1) {
         switch (opt) {
         case 'h':
             usage(argv[0]);
             return 0;
         case 'o':
-            output = optarg;
+            opts.output = optarg;
+            break;
+        case 'p':
+            opts.preemptive = true;
             break;
         default:
             usage(argv[0]);
@@ -88,8 +114,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    algorithm = argv[optind];
-    input     = argv[optind + 1];
+    opts.algorithm = argv[optind];
+    opts.input     = argv[optind + 1];
 
-    return run(algorithm, input, output);
+    return run(&opts);
 }

@@ -1,39 +1,11 @@
 #include "proceso.h"
 #include <assert.h>
-#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define NO_PROCESS_READY -1
-#define DONE_PROCESSING  -2
-
-// Estructura auxiliar para contener el contexto de ejecución.
-typedef struct context_s {
-    int process;
-    unsigned int time;
-} context_t;
-
-FILE* prepararFicheroSalida(const char* outputPath) {
-    FILE* output = fopen(outputPath, "w");
-    if (output == NULL) {
-        fprintf(stderr, "Error al abrir archivo '%s': %s", outputPath, strerror(errno));
-        return NULL;
-    }
-
-    fprintf(output, "ID Proceso,Tiempo de Llegada,Duración de la Ráfaga,Inicio de Ejecución,Fin de Ejecución\n");
-
-    return output;
-}
-
-bool isReady(const Proceso* p, unsigned int currentTime) {
-    assert(p != NULL);
-
-    return p->tiempoLlegada <= currentTime && p->duracionRafaga != 0;
-}
-
-int nextProcess(const procesos_t* procesos, const context_t* context) {
+static int nextProcess(const procesos_t* procesos, const context_t* context) {
     assert(procesos_is_valid(procesos));
     assert(context != NULL);
 
@@ -59,7 +31,7 @@ int nextProcess(const procesos_t* procesos, const context_t* context) {
             }
         }
 
-        if (isReady(p, context->time)) {
+        if (procesos_is_ready(p, context->time)) {
             return next;
         }
 
@@ -70,7 +42,7 @@ int nextProcess(const procesos_t* procesos, const context_t* context) {
 
     // Llegado este punto estamos en el mismo proceso inicial,
     // si está listo para ejecutar, lo ejecutamos.
-    if (isReady(procesos_get(procesos, next), context->time)) {
+    if (procesos_is_ready(procesos_get(procesos, next), context->time)) {
         return context->process;
     }
 
@@ -83,7 +55,7 @@ int nextProcess(const procesos_t* procesos, const context_t* context) {
 }
 
 void planificarRR(procesos_t* procesos, int quantum, const char* outputPath) {
-    context_t context = {.process = NO_PROCESS_READY, .time = 0};
+    context_t context = CONTEXT_INIT;
     FILE* output      = prepararFicheroSalida(outputPath);
 
     if (output == NULL) {
@@ -113,7 +85,15 @@ void planificarRR(procesos_t* procesos, int quantum, const char* outputPath) {
             p->duracionRafaga -= quantum;
         }
 
-        fprintf(output, "%d,%d,%d,%d,%d\n", p->id, p->tiempoLlegada, context.time - startTime, startTime, context.time);
+        RunFrame rf = {
+            .id = p->id,
+            .tiempoLlegada = p->tiempoLlegada,
+            .duracion = context.time - startTime,
+            .inicio = startTime,
+            .fin = context.time,
+        };
+
+        guardarFrame(output, &rf);
     }
 
     fclose(output);
