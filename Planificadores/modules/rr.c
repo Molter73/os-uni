@@ -13,7 +13,7 @@ static int nextProcess(const procesos_t* procesos, const context_t* context) {
     bool noProcessReady = false;
 
     // Iteramos todos los procesos para encontrar cuál se debe ejecutar.
-    size_t next      = context->process + 1;
+    int next         = context->process + 1;
     const Proceso* p = procesos_get(procesos, next);
     for (; next != context->process; p = procesos_get(procesos, ++next)) {
         if (p == NULL) {

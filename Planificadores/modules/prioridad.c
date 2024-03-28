@@ -6,8 +6,9 @@
 #include <stdlib.h> // Para qsort
 #include <string.h>
 
+
 // Función de comparación inicial por prioridad y tiempo de llegada
-int compararPorPrioridad(const void* a, const void* b) {
+int compararPorPrioridad(const void* a, const void* b) { // NOLINT
     const Proceso* proc_a = (const Proceso*)a;
     const Proceso* proc_b = (const Proceso*)b;
 
@@ -24,12 +25,13 @@ int compararPorPrioridad(const void* a, const void* b) {
 void ajustarPrioridadesPorEnvejecimiento(procesos_t* procesos, context_t* context) {
     assert(procesos != NULL);
     assert(context != NULL);
+    const unsigned int PRIORITY_TICK = 100;
 
-    size_t i   = 0;
+    int i      = 0;
     Proceso* p = procesos_get(procesos, i);
     for (; p != NULL; p = procesos_get(procesos, ++i)) {
-        // Cada 100 ticks del sistema que espera un proceso, aumentamos su prioridad en 1.
-        if (p->prioridad != 0 && ((context->time - p->tiempoLlegada) % 100 == 0)) {
+        // Cada PRIORITY_TICK ticks del sistema que espera un proceso, aumentamos su prioridad en 1.
+        if (p->prioridad != 0 && ((context->time - p->tiempoLlegada) % PRIORITY_TICK == 0)) {
             p->prioridad--;
         }
     }
@@ -64,7 +66,7 @@ static int nextProcess(procesos_t* procesos, context_t* context) {
 
     bool processPending = false;
 
-    size_t i   = 0;
+    int i      = 0;
     Proceso* p = procesos_get(procesos, i);
     for (; p != NULL; p = procesos_get(procesos, ++i)) {
         if (procesos_is_ready(p, context->time)) {

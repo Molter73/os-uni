@@ -2,7 +2,7 @@
 #include <stdio.h> // Para fprintf
 #include <stdlib.h>
 
-int compararPorDuracionRafaga(const void* a, const void* b) {
+int compararPorDuracionRafaga(const void* a, const void* b) { // NOLINT
     const Proceso* proc_a = (const Proceso*)a;
     const Proceso* proc_b = (const Proceso*)b;
 
