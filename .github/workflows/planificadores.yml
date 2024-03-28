@@ -70,4 +70,4 @@ jobs:
           bear -- make -C Planificadores
 
           find Planificadores/ -type f -name '*.c' -print0 -o -name '*.h' -print0 |
-            xargs -0 clang-tidy -p compile_commands.json --config-file=.clang-tidy
+            xargs -0 clang-tidy -p compile_commands.json --config-file=.clang-tidy --warnings-as-errors='*'
