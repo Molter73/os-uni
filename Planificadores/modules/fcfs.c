@@ -3,7 +3,7 @@
 #include <stdlib.h> // Para qsort
 
 // Función de comparación para ordenar procesos por tiempo de llegada
-int compararPorTiempoLlegada(const void* a, const void* b) {
+int compararPorTiempoLlegada(const void* a, const void* b) { // NOLINT
     const Proceso* proc_a = (const Proceso*)a;
     const Proceso* proc_b = (const Proceso*)b;
 

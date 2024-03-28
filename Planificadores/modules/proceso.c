@@ -59,11 +59,15 @@ procesos_t* leerProcesosDesdeArchivoBinario(const char* nombreArchivo) {
 
     fseek(archivo, 0, SEEK_END);
     long fileSize = ftell(archivo);
-    rewind(archivo);
+    if (fileSize < 0) {
+        fprintf(stderr, "Fallo al recorrer el archivo: %s", strerror(errno));
+        goto error;
+    }
+    fseek(archivo, 0, SEEK_SET);
 
-    int numProcesos = fileSize / sizeof(Proceso);
-    if (numProcesos <= 0) { // Verificación adicional para el tamaño del archivo
-        fprintf(stderr, "El archivo está vacío o tiene un formato incorrecto.\n");
+    unsigned long numProcesos = fileSize / sizeof(Proceso);
+    if (numProcesos == 0) { // Verificación adicional para el tamaño del archivo
+        fprintf(stderr, "El archivo está vacío.\n");
         goto error;
     }
 
@@ -91,22 +95,22 @@ error:
 void guardarProcesosEnCSV(const char* nombreArchivo, procesos_t* procesos) {
     FILE* archivo = prepararFicheroSalida(nombreArchivo);
 
-    int tiempoActual = 0;
-    size_t i         = 0;
-    Proceso* p       = procesos_get(procesos, i);
+    unsigned int tiempoActual = 0;
+    size_t i                  = 0;
+    Proceso* p                = procesos_get(procesos, i);
     for (; p != NULL; p = procesos_get(procesos, ++i)) {
         if (tiempoActual < p->tiempoLlegada) {
             tiempoActual = p->tiempoLlegada;
         }
 
         RunFrame rf = {
-            .id = p->id,
+            .id            = p->id,
             .tiempoLlegada = p->tiempoLlegada,
-            .duracion = p->duracionRafaga,
-            .inicio = tiempoActual,
-            .fin = tiempoActual + p->duracionRafaga,
+            .duracion      = p->duracionRafaga,
+            .inicio        = tiempoActual,
+            .fin           = tiempoActual + p->duracionRafaga,
         };
-        tiempoActual        = rf.fin;
+        tiempoActual = rf.fin;
 
         guardarFrame(archivo, &rf);
     }
