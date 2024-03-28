@@ -29,6 +29,12 @@ jobs:
     - name: Compile Planificadores
       run: make -C Planificadores
 
+    - name: Setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.10
+        cache: pip
+
     - name: Download process data from gdrive
       run: |
         pip install gdown
@@ -37,5 +43,5 @@ jobs:
     - name: Run all combinations of algorithms and processes
       run: |
         cd Planificadores
-        pip install -r scipts/requirements.txt
+        pip install -r scripts/requirements.txt
         ./scripts/run-all.sh ./planificador ./data ./outputs
