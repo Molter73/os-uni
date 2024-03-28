@@ -96,8 +96,8 @@ void guardarProcesosEnCSV(const char* nombreArchivo, procesos_t* procesos) {
     FILE* archivo = prepararFicheroSalida(nombreArchivo);
 
     unsigned int tiempoActual = 0;
-    size_t i         = 0;
-    Proceso* p       = procesos_get(procesos, i);
+    size_t i                  = 0;
+    Proceso* p                = procesos_get(procesos, i);
     for (; p != NULL; p = procesos_get(procesos, ++i)) {
         if (tiempoActual < p->tiempoLlegada) {
             tiempoActual = p->tiempoLlegada;

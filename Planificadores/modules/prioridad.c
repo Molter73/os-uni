@@ -6,7 +6,6 @@
 #include <stdlib.h> // Para qsort
 #include <string.h>
 
-
 // Función de comparación inicial por prioridad y tiempo de llegada
 int compararPorPrioridad(const void* a, const void* b) { // NOLINT
     const Proceso* proc_a = (const Proceso*)a;
