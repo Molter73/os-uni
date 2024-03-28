@@ -37,4 +37,5 @@ jobs:
     - name: Run all combinations of algorithms and processes
       run: |
         cd Planificadores
+        pip install -r scipts/requirements.txt
         ./scripts/run-all.sh ./planificador ./data ./outputs
