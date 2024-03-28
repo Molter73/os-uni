@@ -32,7 +32,7 @@ jobs:
     - name: Download process data from gdrive
       run: |
         pip install gdown
-        gdown --folder ${{ secrets.GDRIVE_DATA }} -o Planificadores/data/
+        gdown -O Planificadores/data/ --folder ${{ secrets.GDRIVE_DATA }}
 
     - name: Run all combinations of algorithms and processes
       run: |
