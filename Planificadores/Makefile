@@ -22,7 +22,7 @@ debug: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
+.PHONY: clean
 clean:
 	rm -f $(SRC_DIR)/*.o $(MODULES_DIR)/*.o $(TARGET)
-
-.PHONY: clean
+	rm -rf **/*.csv

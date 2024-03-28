@@ -3,6 +3,6 @@
 
 #include "proceso.h"
 
-void planificarRR(procesos_t* procesos, int quantum);
+void planificarRR(procesos_t* procesos, int quantum, const char* outputPath);
 
 #endif

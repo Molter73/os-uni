@@ -15,12 +15,10 @@ typedef struct context_s {
     unsigned int time;
 } context_t;
 
-FILE* prepararFicheroSalida() {
-    const char output_path[] = "./data/rr_procesos.csv";
-
-    FILE* output = fopen(output_path, "w");
+FILE* prepararFicheroSalida(const char* outputPath) {
+    FILE* output = fopen(outputPath, "w");
     if (output == NULL) {
-        fprintf(stderr, "Error al abrir archivo '%s': %s", output_path, strerror(errno));
+        fprintf(stderr, "Error al abrir archivo '%s': %s", outputPath, strerror(errno));
         return NULL;
     }
 
@@ -73,9 +71,9 @@ int nextProcess(const procesos_t* procesos, const context_t* context) {
     return DONE_PROCESSING;
 }
 
-void planificarRR(procesos_t* procesos, int quantum) {
+void planificarRR(procesos_t* procesos, int quantum, const char* outputPath) {
     context_t context = {.process = NO_PROCESS_READY, .time = 0};
-    FILE* output      = prepararFicheroSalida();
+    FILE* output      = prepararFicheroSalida(outputPath);
 
     if (output == NULL) {
         return;
