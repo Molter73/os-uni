@@ -24,7 +24,7 @@ while IFS="" read -r -d $'\0'; do
     mkdir -p "${output_dir}"
 
     for algoritmo in "${ALGORITMOS[@]}"; do
-        echo "ejecutando \"${PLANIFICADOR}\" -o \"${output_dir}\" \"${algoritmo}\" \"${input}\""
+        echo "ejecutando planificador con algoritmo ${algoritmo}"
         "${PLANIFICADOR}" -o "${output_dir}" "${algoritmo}" "${input}"
 
         mkdir -p "${output_dir}/${algoritmo}"
@@ -34,5 +34,18 @@ while IFS="" read -r -d $'\0'; do
             "${output_dir}/${algoritmo}_procesos.csv" \
             "${algoritmo}" \
             -o "${output_dir}/${algoritmo}"
+
+        if [[ "$algoritmo" == "prioridad" ]]; then
+            echo "ejecutando planificador con algoritmo ${algoritmo} con prevaciado"
+            "${PLANIFICADOR}" -po "${output_dir}" "${algoritmo}" "${input}"
+
+            mkdir -p "${output_dir}/${algoritmo}_preemptive"
+
+            echo "Generando métricas y diagrama de Gantt"
+            python3 "${SCRIPT_DIR}/Gantt.py" \
+                "${output_dir}/${algoritmo}_preemptive_procesos.csv" \
+                "${algoritmo}" \
+                -o "${output_dir}/${algoritmo}_preemptive"
+        fi
     done
 done < <(find "$INPUT_DIR" -name 'procesos_*.bin' -type f -print0)
