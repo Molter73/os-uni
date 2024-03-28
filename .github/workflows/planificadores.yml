@@ -1,0 +1,40 @@
+name: Compilar y ejecutar Planificadores.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  paths-filter:
+    runs-on: ubuntu-latest
+    outputs:
+      planificadores_changed: ${{ steps.filter.outputs.planificadores }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          planificadores:
+            - 'Planificadores/**'
+
+  run-planificadores:
+    runs-on: ubuntu-latest
+    needs:
+    - paths-filter
+    if: needs.paths-filter.outputs.planificadores_changed == 'true'
+    steps:
+    - uses: actions/checkout@v4
+    - name: Compile Planificadores
+      run: make -C Planificadores
+
+    - name: Download process data from gdrive
+      run: |
+        pip install gdown
+        gdown --folder ${{ secrets.GDRIVE_DATA }} -o Planificadores/data/
+
+    - name: Run all combinations of algorithms and processes
+      run: |
+        cd Planificadores
+        ./scripts/run-all.sh ./planificador ./data ./outputs
