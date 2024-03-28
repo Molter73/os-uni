@@ -47,7 +47,7 @@ jobs:
         ./scripts/run-all.sh ./planificador ./data ./outputs
 
     - name: Save artifacts
-      uses: actions/store-artifacts@v4
+      uses: actions/upload-artifact@v4
       with:
         name: planificadores
         path: Planificadores/outputs/

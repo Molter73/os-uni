@@ -100,13 +100,13 @@ void guardarProcesosEnCSV(const char* nombreArchivo, procesos_t* procesos) {
         }
 
         RunFrame rf = {
-            .id = p->id,
+            .id            = p->id,
             .tiempoLlegada = p->tiempoLlegada,
-            .duracion = p->duracionRafaga,
-            .inicio = tiempoActual,
-            .fin = tiempoActual + p->duracionRafaga,
+            .duracion      = p->duracionRafaga,
+            .inicio        = tiempoActual,
+            .fin           = tiempoActual + p->duracionRafaga,
         };
-        tiempoActual        = rf.fin;
+        tiempoActual = rf.fin;
 
         guardarFrame(archivo, &rf);
     }

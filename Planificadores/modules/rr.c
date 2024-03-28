@@ -13,7 +13,7 @@ static int nextProcess(const procesos_t* procesos, const context_t* context) {
     bool noProcessReady = false;
 
     // Iteramos todos los procesos para encontrar cuál se debe ejecutar.
-    size_t next = context->process + 1;
+    size_t next      = context->process + 1;
     const Proceso* p = procesos_get(procesos, next);
     for (; next != context->process; p = procesos_get(procesos, ++next)) {
         if (p == NULL) {
@@ -86,11 +86,11 @@ void planificarRR(procesos_t* procesos, int quantum, const char* outputPath) {
         }
 
         RunFrame rf = {
-            .id = p->id,
+            .id            = p->id,
             .tiempoLlegada = p->tiempoLlegada,
-            .duracion = context.time - startTime,
-            .inicio = startTime,
-            .fin = context.time,
+            .duracion      = context.time - startTime,
+            .inicio        = startTime,
+            .fin           = context.time,
         };
 
         guardarFrame(output, &rf);
