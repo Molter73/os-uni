@@ -1,14 +1,14 @@
-import matplotlib.pyplot as plt
-import pandas as pd
 import argparse
-import sys
+import json
 import os
+
+import pandas as pd
+
+from . import ALGORITHMS
 
 
 # Función para leer y procesar los datos de un algoritmo
-def procesar_datos(file):
-    df = pd.read_csv(file)
-
+def procesar_datos(df):
     # Calcular métricas importantes
     df['Tiempo de Espera'] = df['Inicio de Ejecución'] - \
         df['Tiempo de Llegada']
@@ -16,13 +16,13 @@ def procesar_datos(file):
     # Asumiendo igualdad para simplificación
     df['Tiempo de Respuesta'] = df['Tiempo de Espera']
 
-    return df
 
 # Función para calcular métricas de rendimiento
-
-
-def calcular_metricas(df, RoundRobin=False):
-    metrics = {}
+def calcular_metricas(df, algorithm, input_type, preemptive=False):
+    metrics = {
+        'algorithm': algorithm,
+        'input_type': input_type,
+    }
     # Tiempo de espera promedio: Tiempo que cada proceso pasa en la cola antes
     # de su ejecución. Es una métrica crucial para evaluar la percepción de
     # rapidez de un sistema por parte del usuario.
@@ -38,7 +38,7 @@ def calcular_metricas(df, RoundRobin=False):
     # que se inicia su ejecución. En este caso, se asume igual al tiempo de
     # espera para simplificación, pero en algoritmos con desalojo podría ser
     # diferente.
-    if RoundRobin:
+    if preemptive:
         # Ordenar el dataframe por 'ID Proceso' y luego por 'Inicio de
         # Ejecución'
         df_sorted = df.sort_values(by=['ID Proceso', 'Inicio de Ejecución'])
@@ -51,8 +51,8 @@ def calcular_metricas(df, RoundRobin=False):
         df_first_execution.loc[:, 'Tiempo de Respuesta'] = \
             df_first_execution['Inicio de Ejecución'] - \
             df_first_execution['Tiempo de Llegada']
-        # Calcular el tiempo de respuesta promedio específicamente para Round
-        # Robin
+        # Calcular el tiempo de respuesta promedio específicamente para
+        # algoritmos con prevaciado.
         metrics['tiempo_respuesta_promedio'] = \
             df_first_execution['Tiempo de Respuesta'].mean()
     else:
@@ -66,7 +66,7 @@ def calcular_metricas(df, RoundRobin=False):
     # Máximo tiempo de espera: El mayor tiempo que un proceso ha esperado antes
     # de ejecutarse. Útil para identificar casos extremos y evaluar la equidad
     # del algoritmo.
-    metrics['max_tiempo_espera'] = df['Tiempo de Espera'].max()
+    metrics['max_tiempo_espera'] = int(df['Tiempo de Espera'].max())
 
     # Utilización de la CPU: Porcentaje del tiempo total que la CPU estuvo
     # ejecutando procesos. Una alta utilización indica eficiencia, mientras que
@@ -78,7 +78,7 @@ def calcular_metricas(df, RoundRobin=False):
     tiempo_total_observado = \
         df['Fin de Ejecución'].max() - df['Tiempo de Llegada'].min()
 
-    if RoundRobin:
+    if preemptive:
         # Para Round Robin, consideramos cada periodo de ejecución
         # individualmente. Sumamos solo las duraciones efectivas donde la CPU
         # estuvo ejecutando procesos.
@@ -102,79 +102,40 @@ def calcular_metricas(df, RoundRobin=False):
 
     return metrics
 
+
 # Función para imprimir métricas de rendimiento
-
-
-def imprimir_metricas(metrics, output):
+def imprimir_metricas(metrics):
     print("Tiempo de Espera Promedio: " +
-          f"{metrics['tiempo_espera_promedio']:.2f} unidades de tiempo",
-          file=output)
+          f"{metrics['tiempo_espera_promedio']:.2f} unidades de tiempo")
     print("Tiempo de Retorno Promedio: " +
-          f"{metrics['tiempo_retorno_promedio']:.2f} unidades de tiempo",
-          file=output)
+          f"{metrics['tiempo_retorno_promedio']:.2f} unidades de tiempo")
     print("Tiempo de Respuesta Promedio: " +
-          f"{metrics['tiempo_respuesta_promedio']:.2f} unidades de tiempo",
-          file=output)
+          f"{metrics['tiempo_respuesta_promedio']:.2f} unidades de tiempo")
     print("Variabilidad del Tiempo de Espera: " +
-          f"{metrics['var_tiempo_espera']:.2f}",
-          file=output)
+          f"{metrics['var_tiempo_espera']:.2f}")
     print("Máximo Tiempo de Espera: " +
-          f"{metrics['max_tiempo_espera']} unidades de tiempo",
-          file=output)
-    print(f"Utilización de la CPU: {metrics['utilizacion_cpu']:.2f}%",
-          file=output)
+          f"{metrics['max_tiempo_espera']} unidades de tiempo")
+    print(f"Utilización de la CPU: {metrics['utilizacion_cpu']:.2f}%")
     print("Rendimiento: " +
-          f"{metrics['rendimiento']:.2f} procesos/unidad de tiempo",
-          file=output)
+          f"{metrics['rendimiento']:.2f} procesos/unidad de tiempo")
 
 
-# Función para generar el diagrama de Gantt
-def generar_diagrama_gantt(df, titulo, output):
-    fig, ax = plt.subplots(figsize=(10, 6))
-    for index, row in df.iterrows():
-        inicio = row['Inicio de Ejecución']
-        fin = row['Fin de Ejecución']
-        duracion = fin - inicio
-        ax.barh(row['ID Proceso'], duracion, left=inicio,
-                color='skyblue', edgecolor='black')
-
-    ax.set_xlabel('Tiempo')
-    ax.set_ylabel('ID Proceso')
-    ax.set_title(titulo)
-    ax.invert_yaxis()  # Invertir el eje Y
-    plt.grid(axis='x')
+def main(file, output, algorithm, input_type):
+    df = pd.read_csv(file)
+    procesar_datos(df)
+    preemptive = algorithm == 'rr' or algorithm == 'prioridad_aging'
+    metrics = calcular_metricas(df, algorithm, input_type, preemptive)
 
     if output is None:
-        plt.show()
+        print(f"Métricas para Planificador: {algorithm.upper()}")
+        imprimir_metricas(metrics)
     else:
-        plt.savefig(os.path.join(output, 'gantt.png'))
+        with open(os.path.join(output, 'metrics.jsonl'), 'a+') as f:
+            json.dump(metrics, f)
+            f.write("\n")
 
 
-def main(file, output, algorithm):
-    df = procesar_datos(file)
-    metrics = calcular_metricas(df, algorithm == 'rr')
-
-    metrics_file = sys.stdout if output is None else open(
-        os.path.join(output, "metrics.txt"), "w"
-    )
-
-    print(f"Métricas para Planificador: {algorithm.upper()}")
-    imprimir_metricas(metrics, metrics_file)
-    generar_diagrama_gantt(
-        df,
-        f'Diagrama de Gantt para Planificador {algorithm.upper()}',
-        output
-    )
-
-# Main script para procesar los datos de Round Robin como ejemplo
-if __name__ == "__main__":
-    algorithms = [
-        "fcfs",
-        "prioridad",
-        "rr",
-        "sjf",
-    ]
-
+if __name__ == '__main__':
     # Configuración del analizador de argumentos
     parser = argparse.ArgumentParser(
         description='Genera un diagrama de Gantt a partir de un ' +
@@ -185,8 +146,12 @@ if __name__ == "__main__":
         help='Ruta al archivo CSV que contiene los datos de los procesos.'
     )
     parser.add_argument(
-        'algorithm', type=str, choices=algorithms,
+        'algorithm', type=str, choices=ALGORITHMS,
         help="Algoritmo a ser analizado."
+    )
+    parser.add_argument(
+        'input_type', type=str,
+        help='Distribución de entrada de los procesos utilizada'
     )
     parser.add_argument(
         '--output', '-o', type=str, default=None,
@@ -199,4 +164,5 @@ if __name__ == "__main__":
     file = args.file
     output = args.output
     algorithm = args.algorithm
-    main(file, output, algorithm)
+    input_type = args.input_type
+    main(file, output, algorithm, input_type)

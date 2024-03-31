@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -exuo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -12,40 +12,41 @@ ALGORITMOS=(
     "fcfs"
     "sjf"
     "prioridad"
+    "prioridad_preemptive"
     "rr"
 )
 
 while IFS="" read -r -d $'\0'; do
     input="$REPLY"
     input_type="${input%.bin}"
-    input_type="${input_type#"${INPUT_DIR}/"}"
+    input_type="${input_type#"${INPUT_DIR}/procesos_"}"
 
-    output_dir="${OUTPUT_DIR}/${input_type}"
-    mkdir -p "${output_dir}"
+    mkdir -p "${OUTPUT_DIR}/${input_type}"
+    output_dir="$(realpath "${OUTPUT_DIR}")"
 
     for algoritmo in "${ALGORITMOS[@]}"; do
-        echo "ejecutando planificador con algoritmo ${algoritmo}"
-        "${PLANIFICADOR}" -o "${output_dir}" "${algoritmo}" "${input}"
+        extra_args=()
+        if [[ "$algoritmo" == "prioridad_preemptive" ]]; then
+            extra_args+=("-p")
+        fi
 
-        mkdir -p "${output_dir}/${algoritmo}"
+        echo "ejecutando planificador con algoritmo ${algoritmo}"
+        "${PLANIFICADOR}" \
+            -o "${output_dir}/${input_type}" \
+            "${extra_args[@]}" \
+            "${algoritmo%'_preemptive'}" \
+            "${input}"
+
+        mkdir -p "${output_dir}/${input_type}/${algoritmo}"
 
         echo "Generando métricas y diagrama de Gantt"
-        python3 "${SCRIPT_DIR}/Gantt.py" \
-            "${output_dir}/${algoritmo}_procesos.csv" \
-            "${algoritmo}" \
-            -o "${output_dir}/${algoritmo}"
-
-        if [[ "$algoritmo" == "prioridad" ]]; then
-            echo "ejecutando planificador con algoritmo ${algoritmo} con prevaciado"
-            "${PLANIFICADOR}" -po "${output_dir}" "${algoritmo}" "${input}"
-
-            mkdir -p "${output_dir}/${algoritmo}_preemptive"
-
-            echo "Generando métricas y diagrama de Gantt"
-            python3 "${SCRIPT_DIR}/Gantt.py" \
-                "${output_dir}/${algoritmo}_preemptive_procesos.csv" \
+        (
+            cd "$SCRIPT_DIR"
+            python3 -m "analysis.run" \
+                "${output_dir}/${input_type}/${algoritmo}_procesos.csv" \
                 "${algoritmo}" \
-                -o "${output_dir}/${algoritmo}_preemptive"
-        fi
+                "${input_type}" \
+                -o "${output_dir}"
+        )
     done
 done < <(find "$INPUT_DIR" -name 'procesos_*.bin' -type f -print0)
