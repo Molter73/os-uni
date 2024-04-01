@@ -18,8 +18,9 @@ ALGORITMOS=(
 
 while IFS="" read -r -d $'\0'; do
     input="$REPLY"
-    input_type="${input%.bin}"
-    input_type="${input_type#"${INPUT_DIR}/procesos_"}"
+    input_type="$(basename "${input}")"
+    input_type="${input_type%.bin}"
+    input_type="${input_type#"procesos_"}"
 
     mkdir -p "${OUTPUT_DIR}/${input_type}"
     output_dir="$(realpath "${OUTPUT_DIR}")"

@@ -47,7 +47,7 @@ jobs:
         pip install -r scripts/requirements.txt
         ./scripts/run-all.sh ./planificador ./data ./outputs
 
-    - name: Generar ploteo de métricas
+    - name: Plot metrics
       run: |
         cd Planificadores
         mkdir -p outputs/plots
