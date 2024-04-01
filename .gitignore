@@ -8,3 +8,6 @@ planificador
 
 # Compilation database
 compile_commands.json
+
+# Python
+__pycache__/
