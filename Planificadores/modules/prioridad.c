@@ -30,9 +30,14 @@ void ajustarPrioridadesPorEnvejecimiento(procesos_t* procesos, context_t* contex
     int next   = 0;
     Proceso* p = procesos_get(procesos, next);
     for (; p != NULL; p = procesos_get(procesos, ++next)) {
+        int diff = (int)context->time - p->tiempoLlegada;
+        if (diff == 0) {
+            continue;
+        }
+
         // Cada PRIORITY_TICK ticks del sistema que espera un proceso,
         // aumentamos su prioridad en 1.
-        int modulo = ((int)context->time - p->tiempoLlegada) % PRIORITY_TICK;
+        int modulo = diff % PRIORITY_TICK;
         if (p->prioridad != 0 && modulo == 0) {
             p->prioridad--;
         }
