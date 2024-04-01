@@ -47,13 +47,6 @@ jobs:
         pip install -r scripts/requirements.txt
         ./scripts/run-all.sh ./planificador ./data ./outputs
 
-    - name: Save artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: planificadores
-        path: Planificadores/outputs/
-        retention-days: 7
-
     - name: Plot metrics
       run: |
         cd Planificadores
@@ -63,7 +56,7 @@ jobs:
     - name: Save artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: planificadores-ditto
+        name: planificadores
         path: Planificadores/outputs/
         retention-days: 7
 
