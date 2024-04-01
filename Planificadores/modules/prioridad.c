@@ -22,15 +22,18 @@ int compararPorPrioridad(const void* a, const void* b) { // NOLINT
 
 // Ajusta las prioridades de los procesos basándose en el envejecimiento
 void ajustarPrioridadesPorEnvejecimiento(procesos_t* procesos, context_t* context) {
-    assert(procesos != NULL);
+    assert(procesos_is_valid(procesos));
     assert(context != NULL);
-    const unsigned int PRIORITY_TICK = 100;
 
-    int i      = 0;
-    Proceso* p = procesos_get(procesos, i);
-    for (; p != NULL; p = procesos_get(procesos, ++i)) {
-        // Cada PRIORITY_TICK ticks del sistema que espera un proceso, aumentamos su prioridad en 1.
-        if (p->prioridad != 0 && ((context->time - p->tiempoLlegada) % PRIORITY_TICK == 0)) {
+    static const int PRIORITY_TICK = 100;
+
+    int next   = 0;
+    Proceso* p = procesos_get(procesos, next);
+    for (; p != NULL; p = procesos_get(procesos, ++next)) {
+        // Cada PRIORITY_TICK ticks del sistema que espera un proceso,
+        // aumentamos su prioridad en 1.
+        int modulo = ((int)context->time - p->tiempoLlegada) % PRIORITY_TICK;
+        if (p->prioridad != 0 && modulo == 0) {
             p->prioridad--;
         }
     }
@@ -40,36 +43,36 @@ void ajustarPrioridadesPorEnvejecimiento(procesos_t* procesos, context_t* contex
     }
 
     // Una vez se reordenen los procesos, tenemos que ajustar el contexto en
-    // caso que el proceso que estaba ejecutando previamente se haya movido,
+    // caso que el proceso que se estaba ejecutando previamente se haya movido,
     // utilizamos su id para esto
     int id = procesos_get(procesos, context->prevProcess)->id;
 
     // Ajustamos los procesos según las nuevas prioridades
     planificarPrioridades(procesos);
 
-    i = 0;
-    p = procesos_get(procesos, i);
-    for (; p != NULL; p = procesos_get(procesos, ++i)) {
+    next = 0;
+    p    = procesos_get(procesos, next);
+    for (; p != NULL; p = procesos_get(procesos, ++next)) {
         if (p->id == id) {
-            context->prevProcess = i;
+            context->prevProcess = next;
             break;
         }
     }
 }
 
 static int nextProcess(procesos_t* procesos, context_t* context) {
-    assert(procesos != NULL);
+    assert(procesos_is_valid(procesos));
     assert(context != NULL);
 
     ajustarPrioridadesPorEnvejecimiento(procesos, context);
 
     bool processPending = false;
 
-    int i      = 0;
-    Proceso* p = procesos_get(procesos, i);
-    for (; p != NULL; p = procesos_get(procesos, ++i)) {
+    int next   = 0;
+    Proceso* p = procesos_get(procesos, next);
+    for (; p != NULL; p = procesos_get(procesos, ++next)) {
         if (procesos_is_ready(p, context->time)) {
-            return i;
+            return next;
         }
 
         if (p->duracionRafaga != 0) {
@@ -95,28 +98,25 @@ void planificarPrioridadesPreemptive(procesos_t* procesos, const char* outputPat
     // Orden inicial dado por la función sin prevaciado
     planificarPrioridades(procesos);
 
-    while (true) {
+    do {
         context.process = nextProcess(procesos, &context);
-        while (context.process == NO_PROCESS_READY) {
+        if (context.process == NO_PROCESS_READY) {
             // Si no tenemos procesos listos para ejecutar, dejamos pasar un tick.
-            context.time++;
-            context.process = nextProcess(procesos, &context);
+            goto tick;
         }
 
         // Pasamos de no ejecutar nada a ejecutar algo
         if (context.prevProcess == NO_PROCESS_READY) {
             context.prevProcess = context.process;
             context.prevTime    = context.time;
-            context.time++;
-            continue;
+            goto tick;
         }
 
         // En este tick continuamos ejecutando el mismo proceso
         if (context.process == context.prevProcess) {
             Proceso* p = procesos_get(procesos, context.process);
             p->duracionRafaga--;
-            context.time++;
-            continue;
+            goto tick;
         }
 
         // Cambiamos de proceso, guardamos la ejecución del anterior
@@ -132,12 +132,10 @@ void planificarPrioridadesPreemptive(procesos_t* procesos, const char* outputPat
 
         context.prevTime    = context.time;
         context.prevProcess = context.process;
-        context.time++;
 
-        if (context.process == DONE_PROCESSING) {
-            break;
-        }
-    }
+    tick:
+        context.time++;
+    } while (context.process != DONE_PROCESSING);
 }
 
 void planificarPrioridades(procesos_t* procesos) {

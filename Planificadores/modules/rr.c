@@ -10,25 +10,21 @@ static int nextProcess(const procesos_t* procesos, const context_t* context) {
     assert(context != NULL);
 
     bool processPending = false;
-    bool noProcessReady = false;
 
     // Iteramos todos los procesos para encontrar cuál se debe ejecutar.
     int next         = context->process + 1;
     const Proceso* p = procesos_get(procesos, next);
     for (; next != context->process; p = procesos_get(procesos, ++next)) {
         if (p == NULL) {
+            // Si no se estaba ejecutando ningún proceso, dimos toda la vuelta
+            // y no encontramos ningún proceso listo, devolvemos
+            // NO_PROCESS_READY
+            if (context->process == NO_PROCESS_READY) {
+                return NO_PROCESS_READY;
+            }
+
             next = 0;
             p    = procesos_get(procesos, next);
-
-            // En caso que no hubiese ningún proceso ejecutándose, marcamos
-            // esta condición y si damos la vuelta sin encontrar otro proceso
-            // devolvemos NO_PROCESS_READY.
-            if (context->process == NO_PROCESS_READY) {
-                if (noProcessReady) {
-                    return NO_PROCESS_READY;
-                }
-                noProcessReady = true;
-            }
         }
 
         if (procesos_is_ready(p, context->time)) {
@@ -64,10 +60,10 @@ void planificarRR(procesos_t* procesos, int quantum, const char* outputPath) {
 
     while (true) {
         context.process = nextProcess(procesos, &context);
-        while (context.process == NO_PROCESS_READY) {
+        if (context.process == NO_PROCESS_READY) {
             // Si no tenemos procesos listos para ejecutar, dejamos pasar un tick.
             context.time++;
-            context.process = nextProcess(procesos, &context);
+            continue;
         }
 
         if (context.process == DONE_PROCESSING) {
