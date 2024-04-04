@@ -37,10 +37,9 @@ def calcular_metricas_preemptive(df, algorithm, input_type):
     df_first_execution.loc[:, 'Tiempo de Respuesta'] = \
         df_first_execution['Inicio de Ejecución'] - \
         df_first_execution['Tiempo de Llegada']
-    df_first_execution.drop('Tiempo de Retorno', axis=1)
-    df_first_execution.loc['Tiempo de Retorno'] = \
+    df_last_execution.loc[:, 'Tiempo de Retorno'] = \
         df_last_execution['Fin de Ejecución'] - \
-        df_first_execution['Tiempo de Llegada']
+        df_last_execution['Tiempo de Llegada']
 
     metrics['tiempo_respuesta_promedio'] = \
         df_first_execution['Tiempo de Respuesta'].mean()
@@ -54,9 +53,8 @@ def calcular_metricas_preemptive(df, algorithm, input_type):
     metrics['max_tiempo_espera'] = int(
         df_first_execution['Tiempo de Espera'].max())
 
-    metrics['tiempo_retorno_promedio'] = (
-        df_last_execution['Fin de Ejecución'] -
-        df_first_execution['Tiempo de Llegada']).mean()
+    metrics['tiempo_retorno_promedio'] = \
+        df_last_execution['Tiempo de Retorno'].mean()
 
     # El tiempo total observado es el periodo desde el inicio de la primera
     # ejecución hasta el final de la última ejecución.
