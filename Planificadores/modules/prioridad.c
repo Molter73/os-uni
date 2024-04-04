@@ -25,13 +25,13 @@ void ajustarPrioridadesPorEnvejecimiento(procesos_t* procesos, context_t* contex
     assert(procesos_is_valid(procesos));
     assert(context != NULL);
 
-    static const int PRIORITY_TICK = 100;
+    static const int PRIORITY_TICK = 20;
 
     int next   = 0;
     Proceso* p = procesos_get(procesos, next);
     for (; p != NULL; p = procesos_get(procesos, ++next)) {
         int diff = (int)context->time - p->tiempoLlegada;
-        if (diff == 0) {
+        if (diff <= 0) {
             continue;
         }
 
