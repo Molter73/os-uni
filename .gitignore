@@ -11,3 +11,9 @@ compile_commands.json
 
 # Python
 __pycache__/
+
+# clangd cache
+.cache/
+
+# log files
+*.txt
