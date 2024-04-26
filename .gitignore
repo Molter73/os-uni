@@ -5,6 +5,7 @@ outputs/
 # C output objects
 *.o
 planificador
+main
 
 # Compilation database
 compile_commands.json
