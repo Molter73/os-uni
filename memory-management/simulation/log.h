@@ -2,7 +2,9 @@
 #ifndef LOG_H
 #define LOG_H
 
-void logEvent(const char* message);
+int logOpen();
+void logClose();
+void logEvent(const char* fmt, ...);
 void clearLogFiles();
 
 #endif // LOG_H

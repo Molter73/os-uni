@@ -7,6 +7,9 @@ CC = gcc
 # -Wall habilita todos los mensajes de advertencia del compilador.
 CFLAGS = -I./simulation -Wall
 
+# Flags de linkeo
+LDFLAGS =
+
 # Busca todos los archivos fuente en el directorio simulation y los almacena en la variable SRCS.
 SRCS = $(wildcard simulation/*.c)
 
@@ -17,11 +20,19 @@ OBJS = $(SRCS:.c=.o)
 # Depende del objetivo 'main', lo que significa que 'main' debe ser construido cuando se ejecute 'make' o 'make all'.
 all: main
 
+# Compila sin optimizaciones y con símbolos para poder utilizar gdb
+debug: CFLAGS += -g -O0
+debug: main
+
+asan: CFLAGS += -g -O0 -fsanitize=address,undefined
+asan: LDFLAGS += -lasan -lubsan
+asan: main
+
 # Regla para construir el ejecutable 'main'.
 # Depende de main.o y todos los archivos objeto definidos en OBJS.
 # $(CC) -o $@ $^ compila y enlaza los archivos objeto para formar el ejecutable final llamado 'main'.
 main: main.o $(OBJS)
-	$(CC) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^
 
 # Regla para compilar main.c a main.o.
 # $(CC) $(CFLAGS) -c main.c compila el archivo main.c con los flags especificados y produce el archivo objeto main.o.
@@ -40,4 +51,4 @@ clean:
 	rm -f simulation/*.o main.o main
 
 # Indica que 'all' y 'clean' no son archivos, sino nombres de reglas.
-.PHONY: all clean
+.PHONY: all clean asan debug

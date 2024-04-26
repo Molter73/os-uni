@@ -7,12 +7,15 @@
 #include <string.h>
 
 int main(int argc, char *argv[]) {
+    int res = -1;
     if (argc != 2) {
         fprintf(stderr, "Uso: %s [random|locality|thrashing]\n", argv[0]);
-        return 1;
+        return res;
     }
 
-    clearLogFiles();  // Limpia los ficheros de log antes de iniciar las pruebas
+    if (logOpen() != 0) {
+        return -1;
+    }
     srand(time(NULL));  // Inicializa la semilla para la generación de números aleatorios
 
     // Determina qué prueba ejecutar basado en el argumento
@@ -27,8 +30,12 @@ int main(int argc, char *argv[]) {
         testThrashing(3);  // Test de thrashing con 3 procesos
     } else {
         fprintf(stderr, "Prueba '%s' no reconocida. Las pruebas disponibles son: random, sequential, locality, thrashing.\n", argv[1]);
-        return 1;
+        goto cleanup;
     }
 
-    return 0;
+    res = 0;
+
+cleanup:
+    //logClose();
+    return res;
 }
