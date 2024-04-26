@@ -25,7 +25,7 @@ debug: CFLAGS += -g -O0
 debug: main
 
 asan: CFLAGS += -g -O0 -fsanitize=address,undefined
-asan: LDFLAGS += -lasan -lubsan
+asan: LDFLAGS += -fsanitize=address,undefined
 asan: main
 
 # Regla para construir el ejecutable 'main'.
