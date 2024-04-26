@@ -43,6 +43,6 @@ int main(int argc, char* argv[]) {
     res = 0;
 
 cleanup:
-    // logClose();
+    logClose();
     return res;
 }
