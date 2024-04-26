@@ -2,8 +2,8 @@
 #include "log.h"
 #include <stdarg.h>
 #include <stdio.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
 
 static FILE* log = NULL; // NOLINT
 
@@ -27,7 +27,8 @@ void logEvent(const char* fmt, ...) {
     time_t now = 0;
     time(&now);
     char* datetime = ctime(&now);
-    datetime[strlen(datetime)-1] = '\0'; // Remove newline
+
+    datetime[strlen(datetime) - 1] = '\0'; // Remove newline
 
     fprintf(log, "%s: ", datetime);
     va_start(args, fmt);
