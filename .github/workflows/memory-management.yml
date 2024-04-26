@@ -37,6 +37,10 @@ jobs:
         - asan
     steps:
     - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libasan6 libubsan1
     - name: Compile and run memory-management
       run: |
         cd memory-management/
