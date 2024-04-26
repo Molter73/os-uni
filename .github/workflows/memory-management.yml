@@ -1,0 +1,66 @@
+name: Compilar y ejecutar memory-management.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  paths-filter:
+    runs-on: ubuntu-latest
+    outputs:
+      memory_management_changed: ${{ steps.filter.outputs.memory-management }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          memory-management:
+            - 'memory-management/**'
+            - '.github/workflows/memory-management.yml'
+
+  run-memory-management:
+    runs-on: ubuntu-latest
+    needs:
+      - paths-filter
+    if: needs.paths-filter.outputs.memory_management_changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        method:
+        - random
+        - locality
+        - thrashing
+        target:
+        - all
+        - asan
+    steps:
+    - uses: actions/checkout@v4
+    - name: Compile and run memory-management
+      run: |
+        cd memory-management/
+        make ${{ matrix.target }}
+        ./main ${{ matrix.method }}
+
+  lint:
+    runs-on: ubuntu-latest
+    needs:
+      - paths-filter
+    if: needs.paths-filter.outputs.memory_management_changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Formatting check
+        run: |
+          find memory-management/ -type f -name '*.c' -print0 -o -name '*.h' -print0 |
+            xargs -0 clang-format -Werror --style=file -n
+
+      - name: Run clang-tidy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bear
+
+          bear -- make -C memory-management/
+
+          find memory-management/ -type f -name '*.c' -print0 -o -name '*.h' -print0 |
+            xargs -0 clang-tidy -p compile_commands.json --config-file=.clang-tidy --warnings-as-errors='*'
