@@ -1,5 +1,6 @@
 // memory.c
 #include "memory.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,13 +14,29 @@ void initPageTable(PageTable* pt, int num_pages) {
     }
 }
 
+void freePageTable(PageTable* pt) {
+    if (pt != NULL) {
+        free(pt->pages);
+    }
+}
+
 void initProcessPageTables(ProcessPageTables* ppt, int num_processes) {
     static const int PAGES_PER_PROCESS = 256;
-    ppt->tables                        = malloc(num_processes * sizeof(PageTable));
-    ppt->num_processes                 = num_processes;
+
+    ppt->tables        = malloc(num_processes * sizeof(PageTable));
+    ppt->num_processes = num_processes;
     for (int i = 0; i < num_processes; i++) {
         initPageTable(&(ppt->tables[i]), PAGES_PER_PROCESS); // Assign 256 pages per process
     }
+}
+
+void freeProcessPageTables(ProcessPageTables* ppt) {
+    assert(ppt != NULL);
+
+    for (unsigned int i = 0; i < ppt->num_processes; i++) {
+        freePageTable(&ppt->tables[i]);
+    }
+    free(ppt->tables);
 }
 
 int findFreeFrame(Frame frames[], int num_frames) {
@@ -44,8 +61,9 @@ void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, FIF
             int processId = -1;
             // Buscar a qué proceso pertenece la página en el marco
             for (int p = 0; p < ppt.num_processes; p++) {
-                if (ppt.tables[p].pages[frames[i].page_id].valid &&
-                    ppt.tables[p].pages[frames[i].page_id].frame_id == i) {
+                int page_id      = frames[i].page_id;
+                const Page* page = &ppt.tables[p].pages[page_id];
+                if (page->valid && page->page_id == i) {
                     processId = p;
                     break;
                 }
@@ -68,10 +86,8 @@ void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, FIF
     }
 
     fprintf(file, "\nContenido de la cola FIFO (orden de desalojo):\n");
-    Node* current = queue.front;
-    while (current != NULL) {
+    for (Node* current = queue.front; current != NULL; current = current->next) {
         fprintf(file, "Página %d -> ", current->page_id);
-        current = current->next;
     }
     fprintf(file, "NULL\n");
 

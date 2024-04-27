@@ -4,6 +4,23 @@
 #include "memory.h"
 #include "queue.h"
 
+int evictPage(PageTable* pt, Frame frames[], FIFOQueue* queue) {
+    int evictedPageId = dequeue(queue, pt);
+    if (evictedPageId == -1) {
+        logEvent("No hay páginas válidas en la cola FIFO para desalojar.");
+        return -1;
+    }
+
+    int frameIndex                    = pt->pages[evictedPageId].frame_id;
+    pt->pages[evictedPageId].valid    = 0;
+    pt->pages[evictedPageId].frame_id = -1;
+    frames[frameIndex].page_id        = -1;
+    frames[frameIndex].occupied       = 0;
+
+    logEvent("Fallos de página: la página %d desalojada del marco %d", evictedPageId, frameIndex);
+    return frameIndex;
+}
+
 void processPageRequest(PageTable* pt, Frame frames[], FIFOQueue* queue, PageRequest request) {
     // Log the request being processed
     logEvent("Procesando solicitud de página %d para el proceso %d", request.page_id, request.process_id);
@@ -19,19 +36,10 @@ void processPageRequest(PageTable* pt, Frame frames[], FIFOQueue* queue, PageReq
 
     int frameIndex = findFreeFrame(frames, NUM_FRAMES);
     if (frameIndex == -1) {
-        int evictedPageId = dequeue(queue, pt);
-        if (evictedPageId == -1) {
-            logEvent("No hay páginas válidas en la cola FIFO para desalojar.");
+        frameIndex = evictPage(pt, frames, queue);
+        if (frameIndex == -1) {
             return;
         }
-
-        frameIndex                        = pt->pages[evictedPageId].frame_id;
-        pt->pages[evictedPageId].valid    = 0;
-        pt->pages[evictedPageId].frame_id = -1;
-        frames[frameIndex].page_id        = -1;
-        frames[frameIndex].occupied       = 0;
-
-        logEvent("Fallos de página: la página %d desalojada del marco %d", evictedPageId, frameIndex);
     }
 
     frames[frameIndex].page_id          = request.page_id;

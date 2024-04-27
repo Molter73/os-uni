@@ -5,6 +5,7 @@
 #include "defs.h"
 
 void initQueue(FIFOQueue* queue);
+void freeQueue(FIFOQueue* queue);
 void enqueue(FIFOQueue* queue, int page_id);
 int dequeue(FIFOQueue* queue, PageTable* pt);
 
