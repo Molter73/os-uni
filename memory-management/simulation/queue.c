@@ -37,7 +37,7 @@ int dequeue(FIFOQueue* queue, PageTable* pt) {
     while (temp != NULL) {
         page_id          = temp->page_id;
         const Page* page = &pt->pages[page_id];
-        if (page->valid && page->frame_id == -1) {
+        if (page->valid && page->frame_id != -1) {
             break;
         }
 
