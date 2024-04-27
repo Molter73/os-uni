@@ -47,6 +47,29 @@ jobs:
         make ${{ matrix.target }}
         ./main ${{ matrix.method }}
 
+    # A partir de aquí se realiza el ploteo, pero sólo para el target 'all'
+    - name: Setup python
+      uses: actions/setup-python@v5
+      if: matrix.target == 'all'
+      with:
+        python-version: '3.12'
+        cache: pip
+
+    - name: Plot graphs
+      if: matrix.target == 'all'
+      run: |
+          cd memory-management/
+          mkdir -p ${{ matrix.method }}
+          pip3 install -r scripts/requirements.txt
+          python3 scripts/graphs.py simulation_log.txt -o ${{ matrix.method }}
+
+    - name: Save artifacts
+      uses: actions/upload-artifact@v4
+      if: matrix.target == 'all'
+      with:
+        name: ${{ matrix.method }}
+        path: memory-management/${{ matrix.method }}
+        retention-days: 7
   lint:
     runs-on: ubuntu-latest
     needs:
