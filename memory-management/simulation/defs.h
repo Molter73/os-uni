@@ -46,16 +46,4 @@ typedef struct {
     int num_processes; // Cantidad total de procesos simulados.
 } ProcessPageTables;
 
-// Nodo para construir una cola FIFO utilizada en la gestión de páginas.
-typedef struct Node {
-    int page_id;       // ID de la página en el nodo.
-    struct Node* next; // Puntero al siguiente nodo en la cola.
-} Node;
-
-// Cola FIFO que se utiliza para el algoritmo de reemplazo de página FIFO.
-typedef struct {
-    Node* front; // Puntero al primer nodo de la cola.
-    Node* rear;  // Puntero al último nodo de la cola.
-} FIFOQueue;
-
 #endif // DEFS_H

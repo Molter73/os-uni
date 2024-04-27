@@ -3,7 +3,8 @@
 #define REQUEST_H
 
 #include "defs.h"
+#include "queue.h"
 
-void processPageRequest(PageTable* pt, Frame frames[], FIFOQueue* queue, PageRequest request);
+void processPageRequest(PageTable* pt, Frame frames[], Queue* queue, PageRequest request);
 
 #endif // REQUEST_H

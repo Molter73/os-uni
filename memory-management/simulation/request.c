@@ -4,8 +4,8 @@
 #include "memory.h"
 #include "queue.h"
 
-int evictPage(PageTable* pt, Frame frames[], FIFOQueue* queue) {
-    int evictedPageId = dequeue(queue, pt);
+int evictPage(PageTable* pt, Frame frames[], Queue* queue) {
+    int evictedPageId = queue->vtable.dequeue(queue, pt);
     if (evictedPageId == -1) {
         logEvent("No hay páginas válidas en la cola FIFO para desalojar.");
         return -1;
@@ -21,7 +21,7 @@ int evictPage(PageTable* pt, Frame frames[], FIFOQueue* queue) {
     return frameIndex;
 }
 
-void processPageRequest(PageTable* pt, Frame frames[], FIFOQueue* queue, PageRequest request) {
+void processPageRequest(PageTable* pt, Frame frames[], Queue* queue, PageRequest request) {
     // Log the request being processed
     logEvent("Procesando solicitud de página %d para el proceso %d", request.page_id, request.process_id);
 
@@ -47,7 +47,7 @@ void processPageRequest(PageTable* pt, Frame frames[], FIFOQueue* queue, PageReq
     pt->pages[request.page_id].frame_id = frameIndex;
     pt->pages[request.page_id].valid    = 1;
 
-    enqueue(queue, request.page_id);
+    queue->vtable.enqueue(queue, request.page_id);
 
     logEvent("Página %d cargada en el marco %d", request.page_id, frameIndex);
 

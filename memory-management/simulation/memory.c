@@ -48,7 +48,7 @@ int findFreeFrame(Frame frames[], int num_frames) {
     return -1;
 }
 
-void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, FIFOQueue queue) {
+void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, Queue queue) {
     FILE* file = fopen("memory_details.txt", "w");
     if (file == NULL) {
         perror("Error opening file");

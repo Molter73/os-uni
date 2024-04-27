@@ -23,7 +23,7 @@ void initSimulation(Frame frames[], int num_frames) {
 }
 
 void simulate(PageRequest* requests, unsigned long num_requests, Frame frames[], int num_frames, ProcessPageTables* ppt,
-              FIFOQueue* queue) {
+              Queue* queue) {
     for (int i = 0; i < num_requests; i++) {
         PageRequest req = requests[i];
         PageTable* pt   = &(ppt->tables[req.process_id]); // Use the page table of the corresponding process
@@ -36,15 +36,15 @@ void runTest(PageRequest* requests, unsigned long num_requests, const char* test
     Frame frames[NUM_FRAMES];
     ProcessPageTables ppt;
     initProcessPageTables(&ppt, 3); // Inicializa tablas de página para 3 procesos
-    FIFOQueue queue;
-    initQueue(&queue);
+    Queue* queue = &FIFOQueue;
+    queue->vtable.init(queue);
     initSimulation(frames, NUM_FRAMES);
 
     printf("Iniciando prueba: %s\n", test_name);
-    simulate(requests, num_requests, frames, NUM_FRAMES, &ppt, &queue);
+    simulate(requests, num_requests, frames, NUM_FRAMES, &ppt, queue);
 
     freeProcessPageTables(&ppt);
-    freeQueue(&queue);
+    queue->vtable.free(queue);
 }
 
 void testRandomAccess(int num_requests) {
