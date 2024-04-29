@@ -30,10 +30,10 @@ static void adjust(Queue* queue, int page_id) {
     } else {
         target->next->prev = prev;
     }
-    target->next = queue->front;
-    target->prev = NULL;
+    target->next       = queue->front;
+    target->prev       = NULL;
     queue->front->prev = target;
-    queue->front = target;
+    queue->front       = target;
 }
 
 // Agrega el nodo al principio de la cola.
