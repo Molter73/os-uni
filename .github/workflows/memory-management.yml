@@ -32,6 +32,9 @@ jobs:
         - random
         - locality
         - thrashing
+        queue-type:
+        - FIFO
+        - LRU
         target:
         - all
         - asan
@@ -45,7 +48,7 @@ jobs:
       run: |
         cd memory-management/
         make ${{ matrix.target }}
-        ./main ${{ matrix.method }}
+        ./main ${{ matrix.method }} -q ${{ matrix.queue-type }}
 
     # A partir de aquí se realiza el ploteo, pero sólo para el target 'all'
     - name: Setup python
@@ -59,17 +62,18 @@ jobs:
       if: matrix.target == 'all'
       run: |
           cd memory-management/
-          mkdir -p ${{ matrix.method }}
+          mkdir -p ${{ matrix.method }}-${{ matrix.queue-type }}
           pip3 install -r scripts/requirements.txt
-          python3 scripts/graphs.py simulation_log.txt -o ${{ matrix.method }}
+          python3 scripts/graphs.py simulation_log.txt -o ${{ matrix.method }}-${{ matrix.queue-type }}
 
     - name: Save artifacts
       uses: actions/upload-artifact@v4
       if: matrix.target == 'all'
       with:
-        name: ${{ matrix.method }}
-        path: memory-management/${{ matrix.method }}
+        name: ${{ matrix.method }}-${{ matrix.queue-type }}
+        path: memory-management/${{ matrix.method }}-${{ matrix.queue-type }}
         retention-days: 7
+
   lint:
     runs-on: ubuntu-latest
     needs:
