@@ -5,9 +5,10 @@
 
 void freeQueue(Queue* queue);
 
-static void enqueue(Queue* queue, int page_id) {
+static void enqueue(Queue* queue, const PageRequest* pr) {
     Node* newNode    = (Node*)malloc(sizeof(Node));
-    newNode->page_id = page_id;
+    newNode->page_id = pr->page_id;
+    newNode->process_id = pr->process_id;
     newNode->next    = NULL;
     if (queue->rear == NULL) {
         queue->front = queue->rear = newNode;
@@ -17,14 +18,14 @@ static void enqueue(Queue* queue, int page_id) {
     }
 }
 
-static int dequeue(Queue* queue, PageTable* pt) {
+static int dequeue(Queue* queue, PageTable* pt, int process_id) {
     Node* temp  = queue->front;
     Node* prev  = NULL;
     int page_id = -1;
     while (temp != NULL) {
         page_id          = temp->page_id;
         const Page* page = &pt->pages[page_id];
-        if (page->valid && page->frame_id != -1) {
+        if (process_id == temp->process_id && page->valid && page->frame_id != -1) {
             break;
         }
 

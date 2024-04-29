@@ -5,8 +5,8 @@
 #include "queue.h"
 #include <stddef.h>
 
-int evictPage(PageTable* pt, Frame frames[], Queue* queue) {
-    int evictedPageId = queue->dequeue(queue, pt);
+int evictPage(PageTable* pt, Frame frames[], Queue* queue, int process_id) {
+    int evictedPageId = queue->dequeue(queue, pt, process_id);
     if (evictedPageId == -1) {
         logEvent("No hay páginas válidas en la cola FIFO para desalojar.");
         return -1;
@@ -33,14 +33,14 @@ void processPageRequest(PageTable* pt, Frame frames[], Queue* queue, PageRequest
     if (pt->pages[request.page_id].valid) {
         logEvent("Página %d ya está en memoria.", request.page_id);
         if (queue->adjust != NULL) {
-            queue->adjust(queue, request.page_id);
+            queue->adjust(queue, &request);
         }
         return;
     }
 
     int frameIndex = findFreeFrame(frames, NUM_FRAMES);
     if (frameIndex == -1) {
-        frameIndex = evictPage(pt, frames, queue);
+        frameIndex = evictPage(pt, frames, queue, request.process_id);
         if (frameIndex == -1) {
             return;
         }
@@ -51,7 +51,7 @@ void processPageRequest(PageTable* pt, Frame frames[], Queue* queue, PageRequest
     pt->pages[request.page_id].frame_id = frameIndex;
     pt->pages[request.page_id].valid    = 1;
 
-    queue->enqueue(queue, request.page_id);
+    queue->enqueue(queue, &request);
 
     logEvent("Página %d cargada en el marco %d", request.page_id, frameIndex);
 
