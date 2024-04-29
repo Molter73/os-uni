@@ -8,24 +8,26 @@
 typedef struct Node {
     int page_id;       // ID de la página en el nodo.
     struct Node* next; // Puntero al siguiente nodo en la cola.
+    struct Node* prev; // Puntero al nodo anterior en la cola.
 } Node;
 
-// Tabla virtual de funciones de inicialización y acceso a colas
-typedef struct {
-    void (*init)(void* queue);
-    void (*free)(void* queue);
-    void (*enqueue)(void* queue, int page_id);
-    int (*dequeue)(void* queue, PageTable* pt);
-} QueueVtable;
-
 // Cola que se utiliza para el algoritmo de reemplazo de página.
-typedef struct {
+typedef struct Queue {
     Node* front; // Puntero al primer nodo de la cola.
     Node* rear;  // Puntero al último nodo de la cola.
 
-    QueueVtable vtable;
+    void (*free)(struct Queue* queue);
+    void (*adjust)(struct Queue* queue, int page_id);
+    void (*enqueue)(struct Queue* queue, int page_id);
+    int (*dequeue)(struct Queue* queue, PageTable* pt);
 } Queue;
 
+typedef enum {
+    FIFO = 0,
+    LRU,
+} QueueType;
+
 extern Queue FIFOQueue; // NOLINT
+extern Queue LRUQueue;  // NOLINT
 
 #endif // QUEUE_H

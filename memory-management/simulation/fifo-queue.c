@@ -3,10 +3,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
-void initQueue(Queue* queue);
 void freeQueue(Queue* queue);
 
-void enqueue(Queue* queue, int page_id) {
+static void enqueue(Queue* queue, int page_id) {
     Node* newNode    = (Node*)malloc(sizeof(Node));
     newNode->page_id = page_id;
     newNode->next    = NULL;
@@ -18,7 +17,7 @@ void enqueue(Queue* queue, int page_id) {
     }
 }
 
-int dequeue(Queue* queue, PageTable* pt) {
+static int dequeue(Queue* queue, PageTable* pt) {
     Node* temp  = queue->front;
     Node* prev  = NULL;
     int page_id = -1;
@@ -54,13 +53,10 @@ int dequeue(Queue* queue, PageTable* pt) {
 
 // NOLINTNEXTLINE
 Queue FIFOQueue = {
-    .front = NULL,
-    .rear  = NULL,
-    .vtable =
-        {
-            .init    = (void (*)(void*))initQueue,
-            .free    = (void (*)(void*))freeQueue,
-            .enqueue = (void (*)(void*, int))enqueue,
-            .dequeue = (int (*)(void*, PageTable*))dequeue,
-        },
+    .front   = NULL,
+    .rear    = NULL,
+    .free    = freeQueue,
+    .adjust  = NULL,
+    .enqueue = enqueue,
+    .dequeue = dequeue,
 };
