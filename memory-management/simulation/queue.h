@@ -2,11 +2,9 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "defs.h"
-
 // Nodo para construir una cola utilizada en la gestión de páginas.
 typedef struct Node {
-    int page_id;       // ID de la página en el nodo.
+    int frame_id;      // ID del frame en el nodo.
     struct Node* next; // Puntero al siguiente nodo en la cola.
     struct Node* prev; // Puntero al nodo anterior en la cola.
 } Node;
@@ -17,9 +15,9 @@ typedef struct Queue {
     Node* rear;  // Puntero al último nodo de la cola.
 
     void (*free)(struct Queue* queue);
-    void (*adjust)(struct Queue* queue, int page_id);
-    void (*enqueue)(struct Queue* queue, int page_id);
-    int (*dequeue)(struct Queue* queue, PageTable* pt);
+    void (*adjust)(struct Queue* queue, int frame_id);
+    void (*enqueue)(struct Queue* queue, int frame_id);
+    int (*dequeue)(struct Queue* queue);
 } Queue;
 
 typedef enum {

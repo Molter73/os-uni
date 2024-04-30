@@ -87,7 +87,7 @@ void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, Que
 
     fprintf(file, "\nContenido de la cola FIFO (orden de desalojo):\n");
     for (Node* current = queue.front; current != NULL; current = current->next) {
-        fprintf(file, "Página %d -> ", current->page_id);
+        fprintf(file, "Marco %d -> ", current->frame_id);
     }
     fprintf(file, "NULL\n");
 

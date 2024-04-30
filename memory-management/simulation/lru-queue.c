@@ -1,19 +1,21 @@
 // lru-queue.c
 #include "queue.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 void freeQueue(Queue* queue);
+bool isInQueue(const Queue* queue, int frame_id);
 
-static void adjust(Queue* queue, int page_id) {
+static void adjust(Queue* queue, int frame_id) {
     Node* target = queue->front;
-    while (target != NULL && target->page_id != page_id) {
+    while (target != NULL && target->frame_id != frame_id) {
         target = target->next;
     }
 
     if (target == NULL) {
-        fprintf(stderr, "La página %d no estaba en la cola, ESTO NO DEBERIA PASAR!!\n", page_id);
+        fprintf(stderr, "La página %d no estaba en la cola, ESTO NO DEBERIA PASAR!!\n", frame_id);
         exit(EXIT_FAILURE);
     }
 
@@ -37,11 +39,13 @@ static void adjust(Queue* queue, int page_id) {
 }
 
 // Agrega el nodo al principio de la cola.
-static void enqueue(Queue* queue, int page_id) {
-    Node* newNode    = (Node*)malloc(sizeof(Node));
-    newNode->page_id = page_id;
-    newNode->next    = queue->front;
-    newNode->prev    = NULL;
+static void enqueue(Queue* queue, int frame_id) {
+    assert(!isInQueue(queue, frame_id));
+
+    Node* newNode     = (Node*)malloc(sizeof(Node));
+    newNode->frame_id = frame_id;
+    newNode->next     = queue->front;
+    newNode->prev     = NULL;
 
     if (queue->front != NULL) {
         queue->front->prev = newNode;
@@ -54,31 +58,16 @@ static void enqueue(Queue* queue, int page_id) {
 }
 
 // Elimina siempre el último nodo del a cola.
-static int dequeue(Queue* queue, PageTable* pt) {
-    Node* temp  = queue->rear;
-    int page_id = -1;
-
-    while (temp != NULL) {
-        page_id          = temp->page_id;
-        const Page* page = &pt->pages[page_id];
-        if (page->valid && page->frame_id != -1) {
-            break;
-        }
-
-        temp = temp->prev;
-    }
-
+static int dequeue(Queue* queue) {
+    Node* temp = queue->rear;
     if (temp == NULL) {
         return -1;
     }
 
+    int frame_id = temp->frame_id;
+
     if (temp == queue->front) {
-        queue->front = temp->next;
-        if (queue->front == NULL) {
-            queue->rear = NULL;
-        } else {
-            queue->front->prev = NULL;
-        }
+        queue->front = queue->rear = NULL;
     } else {
         Node* prev = temp->prev;
         prev->next = temp->next;
@@ -89,7 +78,7 @@ static int dequeue(Queue* queue, PageTable* pt) {
         }
     }
     free(temp);
-    return page_id;
+    return frame_id;
 }
 
 // NOLINTNEXTLINE

@@ -1,14 +1,20 @@
 // queue.c
 #include "queue.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 void freeQueue(Queue* queue);
+bool isInQueue(const Queue* queue, int frame_id);
 
-static void enqueue(Queue* queue, int page_id) {
-    Node* newNode    = (Node*)malloc(sizeof(Node));
-    newNode->page_id = page_id;
-    newNode->next    = NULL;
+static void enqueue(Queue* queue, int frame_id) {
+    // El siguiente assert se dispara si se intenta agregar un nodo que
+    // se encuentra presente en la cola.
+    assert(!isInQueue(queue, frame_id));
+
+    Node* newNode     = (Node*)malloc(sizeof(Node));
+    newNode->frame_id = frame_id;
+    newNode->next     = NULL;
     if (queue->rear == NULL) {
         queue->front = queue->rear = newNode;
     } else {
@@ -17,38 +23,21 @@ static void enqueue(Queue* queue, int page_id) {
     }
 }
 
-static int dequeue(Queue* queue, PageTable* pt) {
-    Node* temp  = queue->front;
-    Node* prev  = NULL;
-    int page_id = -1;
-    while (temp != NULL) {
-        page_id          = temp->page_id;
-        const Page* page = &pt->pages[page_id];
-        if (page->valid && page->frame_id != -1) {
-            break;
-        }
-
-        prev = temp;
-        temp = temp->next;
-    }
-
+static int dequeue(Queue* queue) {
+    Node* temp = queue->front;
     if (temp == NULL) {
         return -1;
     }
 
-    if (temp == queue->front) {
-        queue->front = temp->next;
-        if (queue->front == NULL) {
-            queue->rear = NULL;
-        }
+    int frame_id = temp->frame_id;
+    if (temp == queue->rear) {
+        queue->front = queue->rear = NULL;
     } else {
-        prev->next = temp->next;
-        if (prev->next == NULL) {
-            queue->rear = prev;
-        }
+        queue->front = temp->next;
     }
+
     free(temp);
-    return page_id;
+    return frame_id;
 }
 
 // NOLINTNEXTLINE
