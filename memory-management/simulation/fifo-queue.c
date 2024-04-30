@@ -6,10 +6,10 @@
 void freeQueue(Queue* queue);
 
 static void enqueue(Queue* queue, const PageRequest* pr) {
-    Node* newNode    = (Node*)malloc(sizeof(Node));
-    newNode->page_id = pr->page_id;
+    Node* newNode       = (Node*)malloc(sizeof(Node));
+    newNode->page_id    = pr->page_id;
     newNode->process_id = pr->process_id;
-    newNode->next    = NULL;
+    newNode->next       = NULL;
     if (queue->rear == NULL) {
         queue->front = queue->rear = newNode;
     } else {
