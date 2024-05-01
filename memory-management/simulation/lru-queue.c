@@ -56,7 +56,7 @@ static void enqueue(Queue* queue, const PageRequest* pr) {
 
 // Elimina siempre el último nodo del a cola.
 static Node* dequeue(Queue* queue) {
-    Node* temp  = queue->rear;
+    Node* temp = queue->rear;
 
     if (temp == NULL) {
         return NULL;
@@ -65,8 +65,8 @@ static Node* dequeue(Queue* queue) {
     if (temp == queue->front) {
         queue->front = queue->rear = NULL;
     } else {
-        Node* prev = temp->prev;
-        prev->next = NULL;
+        Node* prev  = temp->prev;
+        prev->next  = NULL;
         queue->rear = prev;
     }
 

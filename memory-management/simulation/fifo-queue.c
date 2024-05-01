@@ -19,7 +19,7 @@ static void enqueue(Queue* queue, const PageRequest* pr) {
 }
 
 static Node* dequeue(Queue* queue) {
-    Node* temp  = queue->front;
+    Node* temp = queue->front;
 
     if (temp == NULL) {
         return NULL;
