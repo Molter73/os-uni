@@ -6,14 +6,14 @@
 
 void freeQueue(Queue* queue);
 
-static void adjust(Queue* queue, int page_id) {
+static void adjust(Queue* queue, const PageRequest* pr) {
     Node* target = queue->front;
-    while (target != NULL && target->page_id != page_id) {
+    while (target != NULL && target->page_id != pr->page_id && target->process_id != pr->process_id) {
         target = target->next;
     }
 
     if (target == NULL) {
-        fprintf(stderr, "La página %d no estaba en la cola, ESTO NO DEBERIA PASAR!!\n", page_id);
+        fprintf(stderr, "La página %d no estaba en la cola, ESTO NO DEBERIA PASAR!!\n", pr->page_id);
         exit(EXIT_FAILURE);
     }
 
@@ -37,11 +37,12 @@ static void adjust(Queue* queue, int page_id) {
 }
 
 // Agrega el nodo al principio de la cola.
-static void enqueue(Queue* queue, int page_id) {
-    Node* newNode    = (Node*)malloc(sizeof(Node));
-    newNode->page_id = page_id;
-    newNode->next    = queue->front;
-    newNode->prev    = NULL;
+static void enqueue(Queue* queue, const PageRequest* pr) {
+    Node* newNode       = (Node*)malloc(sizeof(Node));
+    newNode->page_id    = pr->page_id;
+    newNode->process_id = pr->process_id;
+    newNode->next       = queue->front;
+    newNode->prev       = NULL;
 
     if (queue->front != NULL) {
         queue->front->prev = newNode;
@@ -54,42 +55,23 @@ static void enqueue(Queue* queue, int page_id) {
 }
 
 // Elimina siempre el último nodo del a cola.
-static int dequeue(Queue* queue, PageTable* pt) {
-    Node* temp  = queue->rear;
-    int page_id = -1;
-
-    while (temp != NULL) {
-        page_id          = temp->page_id;
-        const Page* page = &pt->pages[page_id];
-        if (page->valid && page->frame_id != -1) {
-            break;
-        }
-
-        temp = temp->prev;
-    }
+static Node* dequeue(Queue* queue) {
+    Node* temp = queue->rear;
 
     if (temp == NULL) {
-        return -1;
+        return NULL;
     }
 
     if (temp == queue->front) {
-        queue->front = temp->next;
-        if (queue->front == NULL) {
-            queue->rear = NULL;
-        } else {
-            queue->front->prev = NULL;
-        }
+        queue->front = queue->rear = NULL;
     } else {
-        Node* prev = temp->prev;
-        prev->next = temp->next;
-        if (temp->next == NULL) {
-            queue->rear = prev;
-        } else {
-            temp->next->prev = prev;
-        }
+        Node* prev  = temp->prev;
+        prev->next  = NULL;
+        queue->rear = prev;
     }
-    free(temp);
-    return page_id;
+
+    temp->next = temp->prev = NULL;
+    return temp;
 }
 
 // NOLINTNEXTLINE

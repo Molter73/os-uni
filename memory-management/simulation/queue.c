@@ -8,7 +8,11 @@ void freeQueue(Queue* queue) {
 
     for (Node* current = queue->front; current != NULL;) {
         Node* next = current->next;
-        free(current);
+        freeNode(current);
         current = next;
     }
+}
+
+void freeNode(Node* node) {
+    free(node);
 }

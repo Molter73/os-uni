@@ -7,6 +7,7 @@
 // Nodo para construir una cola utilizada en la gestión de páginas.
 typedef struct Node {
     int page_id;       // ID de la página en el nodo.
+    int process_id;    // ID del proceso
     struct Node* next; // Puntero al siguiente nodo en la cola.
     struct Node* prev; // Puntero al nodo anterior en la cola.
 } Node;
@@ -17,9 +18,9 @@ typedef struct Queue {
     Node* rear;  // Puntero al último nodo de la cola.
 
     void (*free)(struct Queue* queue);
-    void (*adjust)(struct Queue* queue, int page_id);
-    void (*enqueue)(struct Queue* queue, int page_id);
-    int (*dequeue)(struct Queue* queue, PageTable* pt);
+    void (*adjust)(struct Queue* queue, const PageRequest* pr);
+    void (*enqueue)(struct Queue* queue, const PageRequest* pr);
+    Node* (*dequeue)(struct Queue* queue);
 } Queue;
 
 typedef enum {
@@ -29,5 +30,7 @@ typedef enum {
 
 extern Queue FIFOQueue; // NOLINT
 extern Queue LRUQueue;  // NOLINT
+
+void freeNode(Node* node);
 
 #endif // QUEUE_H
