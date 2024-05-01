@@ -20,7 +20,7 @@ typedef struct Queue {
     void (*free)(struct Queue* queue);
     void (*adjust)(struct Queue* queue, const PageRequest* pr);
     void (*enqueue)(struct Queue* queue, const PageRequest* pr);
-    int (*dequeue)(struct Queue* queue, PageTable* pt, int process_id);
+    Node* (*dequeue)(struct Queue* queue);
 } Queue;
 
 typedef enum {
@@ -30,5 +30,7 @@ typedef enum {
 
 extern Queue FIFOQueue; // NOLINT
 extern Queue LRUQueue;  // NOLINT
+
+void freeNode(Node* node);
 
 #endif // QUEUE_H

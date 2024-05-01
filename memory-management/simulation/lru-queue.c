@@ -55,42 +55,23 @@ static void enqueue(Queue* queue, const PageRequest* pr) {
 }
 
 // Elimina siempre el último nodo del a cola.
-static int dequeue(Queue* queue, PageTable* pt, int process_id) {
+static Node* dequeue(Queue* queue) {
     Node* temp  = queue->rear;
-    int page_id = -1;
-
-    while (temp != NULL) {
-        page_id          = temp->page_id;
-        const Page* page = &pt->pages[page_id];
-        if (temp->process_id == process_id && page->valid && page->frame_id != -1) {
-            break;
-        }
-
-        temp = temp->prev;
-    }
 
     if (temp == NULL) {
-        return -1;
+        return NULL;
     }
 
     if (temp == queue->front) {
-        queue->front = temp->next;
-        if (queue->front == NULL) {
-            queue->rear = NULL;
-        } else {
-            queue->front->prev = NULL;
-        }
+        queue->front = queue->rear = NULL;
     } else {
         Node* prev = temp->prev;
-        prev->next = temp->next;
-        if (temp->next == NULL) {
-            queue->rear = prev;
-        } else {
-            temp->next->prev = prev;
-        }
+        prev->next = NULL;
+        queue->rear = prev;
     }
-    free(temp);
-    return page_id;
+
+    temp->next = temp->prev = NULL;
+    return temp;
 }
 
 // NOLINTNEXTLINE

@@ -18,38 +18,21 @@ static void enqueue(Queue* queue, const PageRequest* pr) {
     }
 }
 
-static int dequeue(Queue* queue, PageTable* pt, int process_id) {
+static Node* dequeue(Queue* queue) {
     Node* temp  = queue->front;
-    Node* prev  = NULL;
-    int page_id = -1;
-    while (temp != NULL) {
-        page_id          = temp->page_id;
-        const Page* page = &pt->pages[page_id];
-        if (process_id == temp->process_id && page->valid && page->frame_id != -1) {
-            break;
-        }
-
-        prev = temp;
-        temp = temp->next;
-    }
 
     if (temp == NULL) {
-        return -1;
+        return NULL;
     }
 
-    if (temp == queue->front) {
-        queue->front = temp->next;
-        if (queue->front == NULL) {
-            queue->rear = NULL;
-        }
+    if (temp == queue->rear) {
+        queue->front = queue->rear = NULL;
     } else {
-        prev->next = temp->next;
-        if (prev->next == NULL) {
-            queue->rear = prev;
-        }
+        queue->front = queue->front->next;
     }
-    free(temp);
-    return page_id;
+
+    temp->next = temp->prev = NULL;
+    return temp;
 }
 
 // NOLINTNEXTLINE

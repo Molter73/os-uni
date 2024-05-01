@@ -24,8 +24,7 @@ void simulate(PageRequest* requests, unsigned long num_requests, Frame frames[],
               Queue* queue) {
     for (int i = 0; i < num_requests; i++) {
         PageRequest req = requests[i];
-        PageTable* pt   = &(ppt->tables[req.process_id]); // Use the page table of the corresponding process
-        processPageRequest(pt, frames, queue, req);
+        processPageRequest(ppt, frames, queue, req);
         printMemoryState(frames, num_frames, *ppt, *queue);
     }
 }
