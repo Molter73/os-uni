@@ -48,7 +48,7 @@ int findFreeFrame(Frame frames[], int num_frames) {
     return -1;
 }
 
-void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, Queue queue) {
+void printMemoryState(Frame frames[], int num_frames, const ProcessPageTables* ppt, const Queue* queue) {
     FILE* file = fopen("memory_details.txt", "w");
     if (file == NULL) {
         perror("Error opening file");
@@ -58,25 +58,16 @@ void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, Que
     fprintf(file, "Estado Actual de los Marcos de Memoria:\n");
     for (int i = 0; i < num_frames; i++) {
         if (frames[i].occupied) {
-            int processId = -1;
-            // Buscar a qué proceso pertenece la página en el marco
-            for (int p = 0; p < ppt.num_processes; p++) {
-                int page_id      = frames[i].page_id;
-                const Page* page = &ppt.tables[p].pages[page_id];
-                if (page->valid && page->page_id == i) {
-                    processId = p;
-                    break;
-                }
-            }
-            fprintf(file, "Marco %d: Ocupado por página %d del proceso %d\n", i, frames[i].page_id, processId);
+            fprintf(file, "Marco %d: Ocupado por página %d del proceso %d\n", i, frames[i].page_id,
+                    frames[i].process_id);
         } else {
             fprintf(file, "Marco %d: Libre\n", i);
         }
     }
 
     fprintf(file, "\nDetalle de la Memoria para cada Proceso:\n");
-    for (int p = 0; p < ppt.num_processes; p++) {
-        PageTable pt = ppt.tables[p];
+    for (int p = 0; p < ppt->num_processes; p++) {
+        PageTable pt = ppt->tables[p];
         fprintf(file, "\nProceso %d:\n", p);
         fprintf(file, "Estado de la Tabla de Páginas:\n");
         for (int i = 0; i < pt.num_pages; i++) {
@@ -86,8 +77,9 @@ void printMemoryState(Frame frames[], int num_frames, ProcessPageTables ppt, Que
     }
 
     fprintf(file, "\nContenido de la cola FIFO (orden de desalojo):\n");
-    for (Node* current = queue.front; current != NULL; current = current->next) {
-        fprintf(file, "Página %d -> ", current->page_id);
+    for (Node* current = queue->front; current != NULL; current = current->next) {
+        PageRequest* data = current->data;
+        fprintf(file, "Página %d -> ", data->page_id);
     }
     fprintf(file, "NULL\n");
 

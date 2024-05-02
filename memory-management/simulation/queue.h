@@ -2,12 +2,14 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "defs.h"
+typedef enum {
+    FIFO = 0,
+    LRU,
+} QueueType;
 
 // Nodo para construir una cola utilizada en la gestión de páginas.
 typedef struct Node {
-    int page_id;       // ID de la página en el nodo.
-    int process_id;    // ID del proceso
+    void* data;
     struct Node* next; // Puntero al siguiente nodo en la cola.
     struct Node* prev; // Puntero al nodo anterior en la cola.
 } Node;
@@ -17,20 +19,13 @@ typedef struct Queue {
     Node* front; // Puntero al primer nodo de la cola.
     Node* rear;  // Puntero al último nodo de la cola.
 
-    void (*free)(struct Queue* queue);
-    void (*adjust)(struct Queue* queue, const PageRequest* pr);
-    void (*enqueue)(struct Queue* queue, const PageRequest* pr);
-    Node* (*dequeue)(struct Queue* queue);
+    void (*freeData)(void*);
+    void (*adjust)(struct Queue*, void*);
 } Queue;
 
-typedef enum {
-    FIFO = 0,
-    LRU,
-} QueueType;
-
-extern Queue FIFOQueue; // NOLINT
-extern Queue LRUQueue;  // NOLINT
-
-void freeNode(Node* node);
+Queue* newQueue(void (*freeData)(void*), void (*adjust)(struct Queue*, void*));
+void freeQueue(Queue* q);
+void enqueue(Queue* q, void* data);
+void* dequeue(Queue* q);
 
 #endif // QUEUE_H

@@ -14,33 +14,62 @@ void initSimulation(Frame frames[], int num_frames) {
     assert(frames != NULL);
 
     for (int i = 0; i < num_frames; i++) {
-        frames[i].frame_id = i;
-        frames[i].page_id  = -1;
-        frames[i].occupied = 0;
+        frames[i].frame_id   = i;
+        frames[i].page_id    = -1;
+        frames[i].process_id = -1;
+        frames[i].occupied   = 0;
     }
 }
 
 void simulate(PageRequest* requests, unsigned long num_requests, Frame frames[], int num_frames, ProcessPageTables* ppt,
               Queue* queue) {
     for (int i = 0; i < num_requests; i++) {
-        PageRequest req = requests[i];
-        processPageRequest(ppt, frames, queue, req);
-        printMemoryState(frames, num_frames, *ppt, *queue);
+        processPageRequest(ppt, frames, queue, &requests[i]);
+        printMemoryState(frames, num_frames, ppt, queue);
     }
 }
 
+void adjustQueue(Queue* q, const PageRequest* pr) {
+    Node* node = q->front;
+    for (; node != NULL; node = node->next) {
+        PageRequest* data = node->data;
+        if (data->process_id == pr->process_id && data->page_id == pr->page_id) {
+            break;
+        }
+    }
+
+    if (node == NULL || node == q->rear) {
+        return;
+    }
+
+    if (node == q->front) {
+        q->front = q->front->next;
+        q->front->prev = NULL;
+    } else {
+        Node* prev       = node->prev;
+        prev->next       = node->next;
+        node->next->prev = prev;
+    }
+
+    node->prev    = q->rear;
+    node->next    = NULL;
+    q->rear->next = node;
+    q->rear       = node;
+}
+
 void runTest(PageRequest* requests, unsigned long num_requests, const char* test_name, QueueType queue_type) {
+    void (*adjust)(Queue*, void*) = queue_type == LRU ? (void (*)(Queue*, void*))adjustQueue : NULL;
     Frame frames[NUM_FRAMES];
     ProcessPageTables ppt;
     initProcessPageTables(&ppt, 3); // Inicializa tablas de página para 3 procesos
-    Queue* queue = queue_type == FIFO ? &FIFOQueue : &LRUQueue;
+    Queue* queue = newQueue(NULL, adjust);
     initSimulation(frames, NUM_FRAMES);
 
     printf("Iniciando prueba: %s\n", test_name);
     simulate(requests, num_requests, frames, NUM_FRAMES, &ppt, queue);
 
     freeProcessPageTables(&ppt);
-    queue->free(queue);
+    freeQueue(queue);
 }
 
 void testRandomAccess(int num_requests, QueueType queue_type) { // NOLINT

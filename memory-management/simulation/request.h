@@ -5,6 +5,6 @@
 #include "defs.h"
 #include "queue.h"
 
-void processPageRequest(ProcessPageTables* ppt, Frame frames[], Queue* queue, PageRequest request);
+void processPageRequest(ProcessPageTables* ppt, Frame frames[], Queue* queue, PageRequest* request);
 
 #endif // REQUEST_H

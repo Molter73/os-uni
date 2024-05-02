@@ -23,9 +23,10 @@ typedef struct {
 
 // Estructura que representa un marco de memoria física.
 typedef struct {
-    int frame_id; // Identificador único del marco de memoria.
-    int page_id;  // ID de la página actualmente ocupando este marco; -1 si el marco está libre.
-    int occupied; // Estado de ocupación del marco: 1 si está ocupado, 0 si está libre.
+    int frame_id;   // Identificador único del marco de memoria.
+    int page_id;    // ID de la página actualmente ocupando este marco; -1 si el marco está libre.
+    int process_id; // ID del proceso que actualmente ocupa este marco; -1 si el marco está libre.
+    int occupied;   // Estado de ocupación del marco: 1 si está ocupado, 0 si está libre.
 } Frame;
 
 // Tabla de páginas que asocia páginas de memoria virtual a marcos de memoria física.
