@@ -17,14 +17,14 @@ Node* allocNode(void* data) {
     return newNode;
 }
 
-Queue* newQueue(void (*freeData)(void*), void(*adjust)(Queue*, void*)) {
+Queue* newQueue(void (*freeData)(void*), void (*adjust)(Queue*, void*)) {
     Queue* q = calloc(1, sizeof(Queue));
     if (q == NULL) {
         return NULL;
     }
 
     q->freeData = freeData;
-    q->adjust = adjust;
+    q->adjust   = adjust;
     return q;
 }
 
@@ -49,7 +49,7 @@ void enqueue(Queue* q, void* data) {
     if (q->rear == NULL) {
         q->front = q->rear = newNode;
     } else {
-        newNode->prev     = q->rear;
+        newNode->prev = q->rear;
         q->rear->next = newNode;
         q->rear       = newNode;
     }
@@ -65,7 +65,7 @@ void* dequeue(Queue* q) {
     if (temp == q->rear) {
         q->front = q->rear = NULL;
     } else {
-        q->front = q->front->next;
+        q->front       = q->front->next;
         q->front->prev = NULL;
     }
 

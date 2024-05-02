@@ -43,7 +43,7 @@ void adjustQueue(Queue* q, const PageRequest* pr) {
     }
 
     if (node == q->front) {
-        q->front = q->front->next;
+        q->front       = q->front->next;
         q->front->prev = NULL;
     } else {
         Node* prev       = node->prev;
