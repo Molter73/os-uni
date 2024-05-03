@@ -63,7 +63,7 @@ jobs:
           cd memory-management/
           mkdir -p outputs
           python3 scripts/metrics.py simulation_log.txt |
-            jq '. + {"method": "${{ matrix.method }}", "queue": "${{ matrix.queue-type }}", "accesses": ${{ matrix.accesses }} }' > outputs/metrics-${{ matrix.method }}-${{ matrix.queue-type }}-${{ matrix.accesses }}.json
+            jq -cM '. + {"method": "${{ matrix.method }}", "queue": "${{ matrix.queue-type }}", "accesses": ${{ matrix.accesses }} }' > outputs/metrics-${{ matrix.method }}-${{ matrix.queue-type }}-${{ matrix.accesses }}.json
 
     - name: Save artifacts
       uses: actions/upload-artifact@v4
