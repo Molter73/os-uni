@@ -83,19 +83,57 @@ void testRandomAccess(int num_requests, QueueType queue_type) { // NOLINT
 
 // NOLINTNEXTLINE
 void testTemporalLocality(int num_pages, int num_accesses, int num_processes, QueueType queue_type) {
+    static const int CACHE_SIZE = 5;
+    Queue* previousPages[num_processes];
     PageRequest* requests = malloc(sizeof(PageRequest) * num_accesses);
+
+    for (int i = 0; i < num_processes; i++) {
+        previousPages[i] = newQueue(free, NULL);
+        if (previousPages[i] == NULL) {
+            fprintf(stderr, "Fallo al inicializar cache de páginas\n");
+            goto cleanup;
+        }
+    }
+
     for (int i = 0; i < num_accesses; i++) {
-        int page_id = rand() % num_pages;
+        int page_id; // NOLINT
+        int process_id = rand() % num_processes;
+        Queue* q       = previousPages[process_id];
         // Randomly decide to reuse a recent page or access a new one
-        if (rand() % 2) {
-            page_id = (page_id + rand() % 5) % num_pages; // NOLINT Reuse within a range of recent pages
+        if (q->size != 0 && rand() % 2) {
+            size_t index = rand() % CACHE_SIZE;
+            index        = index < q->size ? index : q->size - 1;
+
+            const Node* n = q->front;
+            for (; index != 0; index--) {
+                n = n->next;
+            }
+            page_id = *(int*)n->data;
+        } else {
+            int* pint = malloc(sizeof(int));
+            if (pint == NULL) {
+                fprintf(stderr, "Fallo al reservar elemento del cache\n");
+                goto cleanup;
+            }
+
+            page_id = rand() % num_pages;
+            *pint   = page_id;
+            enqueue(q, pint);
+            while (q->size > CACHE_SIZE) {
+                free(dequeue(q));
+            }
         }
 
         requests[i].page_id    = page_id;
-        requests[i].process_id = rand() % num_processes;
+        requests[i].process_id = process_id;
     }
 
     runTest(requests, num_accesses, "Localidad Temporal", queue_type);
+
+cleanup:
+    for (int i = 0; i < num_processes; i++) {
+        freeQueue(previousPages[i]);
+    }
     free(requests);
 }
 

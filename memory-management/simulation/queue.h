@@ -2,6 +2,8 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+#include <stddef.h>
+
 typedef enum {
     FIFO = 0,
     LRU,
@@ -18,6 +20,7 @@ typedef struct Node {
 typedef struct Queue {
     Node* front; // Puntero al primer nodo de la cola.
     Node* rear;  // Puntero al último nodo de la cola.
+    size_t size;
 
     void (*freeData)(void*);
     void (*adjust)(struct Queue*, void*);

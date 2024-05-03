@@ -25,6 +25,7 @@ Queue* newQueue(void (*freeData)(void*), void (*adjust)(Queue*, void*)) {
 
     q->freeData = freeData;
     q->adjust   = adjust;
+    q->size = 0;
     return q;
 }
 
@@ -53,6 +54,8 @@ void enqueue(Queue* q, void* data) {
         q->rear->next = newNode;
         q->rear       = newNode;
     }
+
+    q->size++;
 }
 
 void* dequeue(Queue* q) {
@@ -70,5 +73,6 @@ void* dequeue(Queue* q) {
     }
 
     freeNode(temp);
+    q->size--;
     return data;
 }
