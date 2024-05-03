@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-const static int MAX_PAGES = 256;
-
 void initSimulation(Frame frames[], int num_frames) {
     assert(frames != NULL);
 
@@ -72,22 +70,26 @@ void runTest(PageRequest* requests, unsigned long num_requests, const char* test
     freeQueue(queue);
 }
 
-void testRandomAccess(int num_requests, QueueType queue_type) { // NOLINT
-    PageRequest requests[num_requests];
-    for (int i = 0; i < num_requests; i++) {
+void testRandomAccess(const TestConfiguration* config) { // NOLINT
+    assert(config != NULL);
+
+    PageRequest requests[config->num_accesses];
+    for (int i = 0; i < config->num_accesses; i++) {
         requests[i].page_id    = rand() % MAX_PAGES; // Assuming 256 possible pages
         requests[i].process_id = rand() % 3;         // Randomize process IDs among 3 processes
     }
-    runTest(requests, num_requests, "Acceso Aleatorio", queue_type);
+    runTest(requests, config->num_accesses, "Acceso Aleatorio", config->queue_type);
 }
 
 // NOLINTNEXTLINE
-void testTemporalLocality(int num_pages, int num_accesses, int num_processes, QueueType queue_type) {
-    static const int CACHE_SIZE = 5;
-    Queue* previousPages[num_processes];
-    PageRequest* requests = malloc(sizeof(PageRequest) * num_accesses);
+void testTemporalLocality(const TestConfiguration* config) {
+    assert(config != NULL);
 
-    for (int i = 0; i < num_processes; i++) {
+    static const int CACHE_SIZE = 5;
+    Queue* previousPages[config->num_processes];
+    PageRequest* requests = malloc(sizeof(PageRequest) * config->num_accesses);
+
+    for (int i = 0; i < config->num_processes; i++) {
         previousPages[i] = newQueue(free, NULL);
         if (previousPages[i] == NULL) {
             fprintf(stderr, "Fallo al inicializar cache de páginas\n");
@@ -95,9 +97,9 @@ void testTemporalLocality(int num_pages, int num_accesses, int num_processes, Qu
         }
     }
 
-    for (int i = 0; i < num_accesses; i++) {
+    for (int i = 0; i < config->num_accesses; i++) {
         int page_id; // NOLINT
-        int process_id = rand() % num_processes;
+        int process_id = rand() % config->num_processes;
         Queue* q       = previousPages[process_id];
         // Randomly decide to reuse a recent page or access a new one
         if (q->size != 0 && rand() % 2) {
@@ -116,7 +118,7 @@ void testTemporalLocality(int num_pages, int num_accesses, int num_processes, Qu
                 goto cleanup;
             }
 
-            page_id = rand() % num_pages;
+            page_id = rand() % config->num_pages;
             *pint   = page_id;
             enqueue(q, pint);
             while (q->size > CACHE_SIZE) {
@@ -128,25 +130,32 @@ void testTemporalLocality(int num_pages, int num_accesses, int num_processes, Qu
         requests[i].process_id = process_id;
     }
 
-    runTest(requests, num_accesses, "Localidad Temporal", queue_type);
+    runTest(requests, config->num_accesses, "Localidad Temporal", config->queue_type);
 
 cleanup:
-    for (int i = 0; i < num_processes; i++) {
+    for (int i = 0; i < config->num_processes; i++) {
         freeQueue(previousPages[i]);
     }
     free(requests);
 }
 
 // NOLINTNEXTLINE
-void testThrashing(int num_processes, QueueType queue_type) {
+void testThrashing(const TestConfiguration* config) {
     int num_pages         = MAX_PAGES;      // Assuming more pages than frames
     int num_requests      = num_pages * 10; // NOLINT High number of accesses
+    if (config->num_accesses > num_requests) {
+        num_requests = config->num_accesses;
+    } else {
+        printf("Cantidad de accesos insuficientes para test de thrashing\n");
+        printf("Utilizando %d accesos.\n", num_requests);
+    }
+
     PageRequest* requests = malloc(sizeof(PageRequest) * num_requests);
     for (int i = 0; i < num_requests; i++) {
         requests[i].page_id    = rand() % num_pages;
-        requests[i].process_id = rand() % num_processes;
+        requests[i].process_id = rand() % config->num_processes;
     }
 
-    runTest(requests, num_requests, "Thrashing", queue_type);
+    runTest(requests, num_requests, "Thrashing", config->queue_type);
     free(requests);
 }

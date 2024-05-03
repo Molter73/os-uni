@@ -25,7 +25,7 @@ Queue* newQueue(void (*freeData)(void*), void (*adjust)(Queue*, void*)) {
 
     q->freeData = freeData;
     q->adjust   = adjust;
-    q->size = 0;
+    q->size     = 0;
     return q;
 }
 

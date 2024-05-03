@@ -5,6 +5,7 @@
 #define DEFS_H
 
 // Tamaño de página estándar utilizado en la simulación.
+#include "queue.h"
 #define PAGE_SIZE 4096
 
 // Número de marcos de página disponibles en la memoria física.
@@ -12,6 +13,9 @@
 
 // Tamaño total de la memoria física calculado en base a la cantidad y tamaño de los marcos de página.
 #define MEMORY_SIZE (NUM_FRAMES * PAGE_SIZE)
+
+// Máxima cantidad de páginas
+#define MAX_PAGES 256
 
 // Estructura que representa una página de memoria con su ID, el ID del marco en el que se encuentra (si está en
 // memoria) y un indicador de validez.
@@ -46,5 +50,13 @@ typedef struct {
     PageTable* tables; // Array de tablas de página, una por proceso.
     int num_processes; // Cantidad total de procesos simulados.
 } ProcessPageTables;
+
+// Estructura auxiliar para configurar pruebas.
+typedef struct {
+    int num_processes;
+    int num_pages;
+    int num_accesses;
+    QueueType queue_type;
+} TestConfiguration;
 
 #endif // DEFS_H
