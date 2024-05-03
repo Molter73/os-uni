@@ -141,8 +141,8 @@ cleanup:
 
 // NOLINTNEXTLINE
 void testThrashing(const TestConfiguration* config) {
-    int num_pages         = MAX_PAGES;      // Assuming more pages than frames
-    int num_requests      = num_pages * 10; // NOLINT High number of accesses
+    int num_pages    = MAX_PAGES;      // Assuming more pages than frames
+    int num_requests = num_pages * 10; // NOLINT High number of accesses
     if (config->num_accesses > num_requests) {
         num_requests = config->num_accesses;
     } else {
