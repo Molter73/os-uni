@@ -55,17 +55,17 @@ void adjustQueue(Queue* q, const PageRequest* pr) {
     q->rear       = node;
 }
 
-void runTest(PageRequest* requests, unsigned long num_requests, const char* test_name, QueueType queue_type,
-             int num_processes) {
-    void (*adjust)(Queue*, void*) = queue_type == LRU ? (void (*)(Queue*, void*))adjustQueue : NULL;
+void runTest(PageRequest* requests, const char* test_name, const TestConfiguration* config) {
+    assert(config != NULL);
+    void (*adjust)(Queue*, void*) = config->queue_type == LRU ? (void (*)(Queue*, void*))adjustQueue : NULL;
     Frame frames[NUM_FRAMES];
     ProcessPageTables ppt;
-    initProcessPageTables(&ppt, num_processes); // Inicializa tablas de página para 3 procesos
+    initProcessPageTables(&ppt, config->num_processes); // Inicializa tablas de página para 3 procesos
     Queue* queue = newQueue(NULL, adjust);
     initSimulation(frames, NUM_FRAMES);
 
     printf("Iniciando prueba: %s\n", test_name);
-    simulate(requests, num_requests, frames, NUM_FRAMES, &ppt, queue);
+    simulate(requests, config->num_accesses, frames, NUM_FRAMES, &ppt, queue);
 
     freeProcessPageTables(&ppt);
     freeQueue(queue);
@@ -79,7 +79,7 @@ void testRandomAccess(const TestConfiguration* config) { // NOLINT
         requests[i].page_id    = rand() % MAX_PAGES;             // Assuming 256 possible pages
         requests[i].process_id = rand() % config->num_processes; // Randomize process IDs among 3 processes
     }
-    runTest(requests, config->num_accesses, "Acceso Aleatorio", config->queue_type, config->num_processes);
+    runTest(requests, "Acceso Aleatorio", config);
 }
 
 // NOLINTNEXTLINE
@@ -131,7 +131,7 @@ void testTemporalLocality(const TestConfiguration* config) {
         requests[i].process_id = process_id;
     }
 
-    runTest(requests, config->num_accesses, "Localidad Temporal", config->queue_type, config->num_processes);
+    runTest(requests, "Localidad Temporal", config);
 
 cleanup:
     for (int i = 0; i < config->num_processes; i++) {
@@ -141,11 +141,12 @@ cleanup:
 }
 
 // NOLINTNEXTLINE
-void testThrashing(const TestConfiguration* config) {
+void testThrashing(const TestConfiguration* _config) {
+    TestConfiguration config = *_config;
     int num_pages    = MAX_PAGES;      // Assuming more pages than frames
     int num_requests = num_pages * 10; // NOLINT High number of accesses
-    if (config->num_accesses > num_requests) {
-        num_requests = config->num_accesses;
+    if (config.num_accesses > num_requests) {
+        num_requests = config.num_accesses;
     } else {
         printf("Cantidad de accesos insuficientes para test de thrashing\n");
         printf("Utilizando %d accesos.\n", num_requests);
@@ -154,9 +155,9 @@ void testThrashing(const TestConfiguration* config) {
     PageRequest* requests = malloc(sizeof(PageRequest) * num_requests);
     for (int i = 0; i < num_requests; i++) {
         requests[i].page_id    = rand() % num_pages;
-        requests[i].process_id = rand() % config->num_processes;
+        requests[i].process_id = rand() % config.num_processes;
     }
 
-    runTest(requests, num_requests, "Thrashing", config->queue_type, config->num_processes);
+    runTest(requests, "Thrashing", &config);
     free(requests);
 }
