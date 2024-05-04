@@ -40,6 +40,7 @@ jobs:
         - 10000
         - 100000
         - 1000000
+        - 10000000
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
@@ -91,13 +92,27 @@ jobs:
           python-version: '3.12'
           cache: pip
 
+      - name: Install python deps
+        run: python3 -m pip install -r memory-management/scripts/requirements.txt
+
       - name: Unify metrics
         run: |
           for file in /tmp/outputs/*; do
             cat "$file" >> /tmp/outputs/metrics.jsonl
           done
 
-          cat /tmp/outputs/metrics.jsonl
+      - name: Plot graphs
+        run: |
+          ./memory-management/scripts/graphs.py \
+            /tmp/outputs/metrics.jsonl \
+            -o /tmp/outputs
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unified-metrics
+          path: /tmp/outputs/**
+          retention-days: 7
 
   asan-checks:
     runs-on: ubuntu-latest

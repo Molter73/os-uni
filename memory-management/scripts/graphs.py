@@ -1,85 +1,62 @@
-# graphs.py
+#!/usr/bin/env python3
+
 import argparse
 import os
+
 import matplotlib.pyplot as plt
-import sys
+import pandas as pd
 
 
-class Stats:
-    def __init__(self, file_path):
-        (self.page_faults, self.page_evictions, self.page_hits,
-            self.total_requests) = Stats._parse_log(file_path)
-
-    def _parse_log(file_path):
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-
-        page_faults = 0
-        page_evictions = 0
-        page_hits = 0
-        total_requests = 0
-
-        for line in lines:
-            total_requests += 1
-
-            if "Estado inicial: Página" in line:
-                if "no válida" in line:
-                    page_faults += 1
-                else:
-                    page_hits += 1
-            elif "Fallos de página" in line:
-                page_evictions += 1
-
-        return page_faults, page_evictions, page_hits, total_requests
-
-    def calculate_metrics(self):
-        page_fault_rate = (self.page_faults / self.total_requests) * 100
-        eviction_rate = (self.page_evictions / self.total_requests) * 100
-        hit_rate = (self.page_hits / self.total_requests) * 100
-
-        return page_fault_rate, eviction_rate, hit_rate
-
-    def print_metrics(self, output):
-        page_fault_rate, eviction_rate, hit_rate = self.calculate_metrics()
-        output.write(f"Page Fault Rate: {page_fault_rate:.2f}%\n")
-        output.write(f"Eviction Rate: {eviction_rate:.2f}%\n")
-        output.write(f"Hit Rate: {hit_rate:.2f}%\n")
+def read_metrics(input):
+    df = pd.read_json(input, orient='records', lines=True)
+    df.sort_values(by=['method', 'queue', 'accesses'], inplace=True)
+    return df
 
 
-def plot_metrics(stats: Stats, output_dir):
-    page_fault_rate, eviction_rate, hit_rate = stats.calculate_metrics()
-    labels = ['Page Fault Rate', 'Eviction Rate', 'Hit Rate']
-    values = [page_fault_rate, eviction_rate, hit_rate]
+def single_plot(method, metrics, output_dir):
+    fig, ax = plt.subplots(nrows=3, ncols=1, layout='constrained')
+    i = 0
 
-    plt.bar(labels, values, color=['red', 'blue', 'green'])
-    plt.ylabel('Percentage')
-    plt.title('Memory Management Performance Metrics')
-    plt.ylim(0, 100)  # Optional: Adjust based on your data range
+    for metric in ['page_fault_rate', 'eviction_rate', 'hit_rate']:
+        for queue_type in metrics['queue'].unique():
+            queue_metrics = metrics[metrics['queue'] == queue_type]
+            label = queue_type if i == 0 else ''
+            ax[i].plot(queue_metrics['accesses'],
+                       queue_metrics[metric], label=label)
+            ax[i].set_title(metric)
+            ax[i].grid(True)
+        i = i+1
+
+    fig.legend(loc='upper left')
+    fig.suptitle(method, fontsize='x-large')
+    plt.xlabel('Accesos a páginas')
     if output_dir is None:
         plt.show()
     else:
-        plt.savefig(os.path.join(output_dir, 'graph.png'))
+        plt.savefig(os.path.join(output_dir, f'{method}.png'))
 
 
-def main(log_path, output_dir):
-    stats = Stats(log_path)
-    metrics_output = sys.stdout
-    if output_dir is not None:
-        metrics_output = open(os.path.join(output_dir, 'metrics.txt'), 'w')
-    stats.print_metrics(metrics_output)
+def plot_metrics(metrics, output_dir):
+    for method, submetrics in metrics.groupby('method'):
+        single_plot(method, submetrics, output_dir)
+
+
+def main(input, output_dir):
+    metrics = read_metrics(input)
 
     # Plot the metrics
-    plot_metrics(stats, output_dir)
+    plot_metrics(metrics, output_dir)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help='Log de simulación de entrada')
+    parser.add_argument('input', type=str,
+                        help='Archivo json lines con métricas')
     parser.add_argument('--output', '-o', type=str, default=None,
                         help='Path al directorio de salida')
 
     args = parser.parse_args()
-    log_path = args.input
+    input = args.input
     output_dir = args.output
 
-    main(log_path, output_dir)
+    main(input, output_dir)
