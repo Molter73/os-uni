@@ -29,6 +29,7 @@ int run(const opts_t* opts) {
     assert(opts != NULL);
     TestConfiguration config = {
         .num_processes = 3,
+        .num_pages     = MAX_PAGES,
         .num_accesses  = opts->num_accesses,
         .queue_type    = opts->queue_type,
     };
