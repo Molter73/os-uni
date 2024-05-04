@@ -55,11 +55,11 @@ void adjustQueue(Queue* q, const PageRequest* pr) {
     q->rear       = node;
 }
 
-void runTest(PageRequest* requests, unsigned long num_requests, const char* test_name, QueueType queue_type) {
+void runTest(PageRequest* requests, unsigned long num_requests, const char* test_name, QueueType queue_type, int num_processes) {
     void (*adjust)(Queue*, void*) = queue_type == LRU ? (void (*)(Queue*, void*))adjustQueue : NULL;
     Frame frames[NUM_FRAMES];
     ProcessPageTables ppt;
-    initProcessPageTables(&ppt, 3); // Inicializa tablas de página para 3 procesos
+    initProcessPageTables(&ppt, num_processes); // Inicializa tablas de página para 3 procesos
     Queue* queue = newQueue(NULL, adjust);
     initSimulation(frames, NUM_FRAMES);
 
@@ -76,9 +76,9 @@ void testRandomAccess(const TestConfiguration* config) { // NOLINT
     PageRequest requests[config->num_accesses];
     for (int i = 0; i < config->num_accesses; i++) {
         requests[i].page_id    = rand() % MAX_PAGES; // Assuming 256 possible pages
-        requests[i].process_id = rand() % 3;         // Randomize process IDs among 3 processes
+        requests[i].process_id = rand() % config->num_processes;         // Randomize process IDs among 3 processes
     }
-    runTest(requests, config->num_accesses, "Acceso Aleatorio", config->queue_type);
+    runTest(requests, config->num_accesses, "Acceso Aleatorio", config->queue_type, config->num_processes);
 }
 
 // NOLINTNEXTLINE
@@ -130,7 +130,7 @@ void testTemporalLocality(const TestConfiguration* config) {
         requests[i].process_id = process_id;
     }
 
-    runTest(requests, config->num_accesses, "Localidad Temporal", config->queue_type);
+    runTest(requests, config->num_accesses, "Localidad Temporal", config->queue_type, config->num_processes);
 
 cleanup:
     for (int i = 0; i < config->num_processes; i++) {
@@ -156,6 +156,6 @@ void testThrashing(const TestConfiguration* config) {
         requests[i].process_id = rand() % config->num_processes;
     }
 
-    runTest(requests, num_requests, "Thrashing", config->queue_type);
+    runTest(requests, num_requests, "Thrashing", config->queue_type, config->num_processes);
     free(requests);
 }
