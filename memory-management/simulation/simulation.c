@@ -55,7 +55,8 @@ void adjustQueue(Queue* q, const PageRequest* pr) {
     q->rear       = node;
 }
 
-void runTest(PageRequest* requests, unsigned long num_requests, const char* test_name, QueueType queue_type, int num_processes) {
+void runTest(PageRequest* requests, unsigned long num_requests, const char* test_name, QueueType queue_type,
+             int num_processes) {
     void (*adjust)(Queue*, void*) = queue_type == LRU ? (void (*)(Queue*, void*))adjustQueue : NULL;
     Frame frames[NUM_FRAMES];
     ProcessPageTables ppt;
@@ -75,8 +76,8 @@ void testRandomAccess(const TestConfiguration* config) { // NOLINT
 
     PageRequest requests[config->num_accesses];
     for (int i = 0; i < config->num_accesses; i++) {
-        requests[i].page_id    = rand() % MAX_PAGES; // Assuming 256 possible pages
-        requests[i].process_id = rand() % config->num_processes;         // Randomize process IDs among 3 processes
+        requests[i].page_id    = rand() % MAX_PAGES;             // Assuming 256 possible pages
+        requests[i].process_id = rand() % config->num_processes; // Randomize process IDs among 3 processes
     }
     runTest(requests, config->num_accesses, "Acceso Aleatorio", config->queue_type, config->num_processes);
 }

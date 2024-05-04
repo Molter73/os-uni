@@ -25,6 +25,7 @@ def single_plot(method, metrics, output_dir):
                        queue_metrics[metric], label=label)
             ax[i].set_title(metric)
             ax[i].grid(True)
+            ax[i].set_xscale('log')
         i = i+1
 
     fig.legend(loc='upper left')
