@@ -35,9 +35,12 @@ jobs:
         queue-type:
         - FIFO
         - LRU
-        target:
-        - all
-        - asan
+        accesses:
+        - 1000
+        - 10000
+        - 100000
+        - 1000000
+        - 10000000
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
@@ -47,32 +50,97 @@ jobs:
     - name: Compile and run memory-management
       run: |
         cd memory-management/
-        make ${{ matrix.target }}
+        make
         ./main ${{ matrix.method }} -q ${{ matrix.queue-type }}
 
-    # A partir de aquí se realiza el ploteo, pero sólo para el target 'all'
     - name: Setup python
       uses: actions/setup-python@v5
-      if: matrix.target == 'all'
       with:
         python-version: '3.12'
         cache: pip
 
-    - name: Plot graphs
-      if: matrix.target == 'all'
+    - name: Create metrics file
       run: |
           cd memory-management/
-          mkdir -p ${{ matrix.method }}-${{ matrix.queue-type }}
-          pip3 install -r scripts/requirements.txt
-          python3 scripts/graphs.py simulation_log.txt -o ${{ matrix.method }}-${{ matrix.queue-type }}
+          mkdir -p outputs
+          python3 scripts/metrics.py simulation_log.txt |
+            jq -cM '. + {"method": "${{ matrix.method }}", "queue": "${{ matrix.queue-type }}", "accesses": ${{ matrix.accesses }} }' > outputs/metrics-${{ matrix.method }}-${{ matrix.queue-type }}-${{ matrix.accesses }}.json
 
     - name: Save artifacts
       uses: actions/upload-artifact@v4
-      if: matrix.target == 'all'
       with:
-        name: ${{ matrix.method }}-${{ matrix.queue-type }}
-        path: memory-management/${{ matrix.method }}-${{ matrix.queue-type }}
+        name: ${{ matrix.method }}-${{ matrix.queue-type }}-${{ matrix.accesses }}
+        path: memory-management/outputs/metrics-${{ matrix.method }}-${{ matrix.queue-type }}-${{ matrix.accesses }}.json
         retention-days: 7
+
+  plot-graphs:
+    runs-on: ubuntu-latest
+    needs:
+    - paths-filter
+    - run-memory-management
+    if: needs.paths-filter.outputs.memory_management_changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/inputs
+          merge-multiple: true
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install python deps
+        run: python3 -m pip install -r memory-management/scripts/requirements.txt
+
+      - name: Unify metrics
+        run: |
+          mkdir -p /tmp/outputs
+          for file in /tmp/inputs/*.json; do
+            cat "$file" >> /tmp/outputs/metrics.jsonl
+          done
+
+      - name: Plot graphs
+        run: |
+          ./memory-management/scripts/graphs.py \
+            /tmp/outputs/metrics.jsonl \
+            -o /tmp/outputs
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics
+          path: /tmp/outputs/**
+          retention-days: 7
+
+  asan-checks:
+    runs-on: ubuntu-latest
+    needs:
+      - paths-filter
+    if: needs.paths-filter.outputs.memory_management_changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        method:
+        - random
+        - locality
+        - thrashing
+        queue-type:
+        - FIFO
+        - LRU
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libasan6 libubsan1
+    - name: Compile and run memory-management
+      run: |
+        cd memory-management/
+        make asan
+        ./main ${{ matrix.method }} -q ${{ matrix.queue-type }}
 
   lint:
     runs-on: ubuntu-latest
