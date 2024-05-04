@@ -143,7 +143,12 @@ cleanup:
 // NOLINTNEXTLINE
 void testThrashing(const TestConfiguration* _config) {
     assert(_config != NULL);
-    TestConfiguration config = *_config;
+    TestConfiguration config = {
+        .num_processes = _config->num_processes,
+        .num_pages     = _config->num_pages,
+        .num_accesses  = _config->num_accesses,
+        .queue_type    = _config->queue_type,
+    };
 
     int num_pages    = MAX_PAGES;      // Assuming more pages than frames
     int num_requests = num_pages * 10; // NOLINT High number of accesses
