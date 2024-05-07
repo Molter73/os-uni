@@ -36,11 +36,12 @@ jobs:
         - FIFO
         - LRU
         accesses:
+        - 10
+        - 100
         - 1000
         - 10000
         - 100000
         - 1000000
-        - 10000000
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
