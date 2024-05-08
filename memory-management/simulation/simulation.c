@@ -71,7 +71,7 @@ void runTest(PageRequest* requests, const char* test_name, const TestConfigurati
     freeQueue(queue);
 }
 
-void testRandomAccess(const TestConfiguration* config) { // NOLINT
+void testRandomAccess(const TestConfiguration* config) {
     assert(config != NULL);
 
     PageRequest requests[config->num_accesses];
@@ -140,7 +140,6 @@ cleanup:
     free(requests);
 }
 
-// NOLINTNEXTLINE
 void testThrashing(const TestConfiguration* _config) {
     assert(_config != NULL);
     TestConfiguration config = {
